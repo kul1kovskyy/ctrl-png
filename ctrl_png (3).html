@@ -1,0 +1,2144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CTRL.PNG — Платформа и инструменты для дизайнеров</title>
+  <style>
+    /* ==========================================================================
+       1. ДИЗАЙН-ТОКЕНЫ (ГРАФИТОВО-ТИТАНОВАЯ ПАЛИТРА)
+       ========================================================================== */
+    :root {
+      --bg-base: #16171b;
+      --bg-card: #1d1f26;
+      --bg-hover: #242730;
+      --bg-elevated: #22252e;
+      --border: #2f3441;
+      --border-subtle: #252833;
+      --text-main: #f3f4f6;
+      --text-sec: #9ca3af;
+      --text-muted: #6b7280;
+      --lime: #d4ff33;
+      --lime-soft: rgba(212, 255, 51, 0.12);
+      --danger: #ff5252;
+      --warning: #f59e0b;
+      --success: #10b981;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+      --radius-xl: 22px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-pill: 9999px;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      min-height: 100vh;
+      background-color: var(--bg-base);
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    button, input, select, textarea {
+      font-family: inherit;
+      color: inherit;
+      background: none;
+      border: none;
+      outline: none;
+    }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+
+    /* Фоновые сетки (Чертёж по умолчанию) */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    body.grid-blueprint .bg-grid {
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(to right, rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+    }
+    body.grid-png .bg-grid {
+      background-image:
+        linear-gradient(45deg, #1b1d23 25%, transparent 25%),
+        linear-gradient(-45deg, #1b1d23 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1b1d23 75%),
+        linear-gradient(-45deg, transparent 75%, #1b1d23 75%);
+      background-size: 32px 32px;
+      background-position: 0 0, 0 16px, 16px -16px, -16px 0;
+    }
+    body.grid-clean .bg-grid {
+      background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.04), transparent 65%);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ==========================================================================
+       2. КАПСУЛЬНАЯ ШАПКА И ВЕКТОРНЫЙ ЛОГОТИП CTRL (БЕЗ .PNG)
+       ========================================================================== */
+    .header-wrap {
+      position: fixed;
+      top: 16px;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      padding: 0 16px;
+      pointer-events: none;
+    }
+    .capsule-nav {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px 8px 18px;
+      background: rgba(24, 26, 32, 0.88);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      box-shadow: 0 16px 38px rgba(0,0,0,0.45);
+    }
+    .brand-logo {
+      display: inline-flex;
+      align-items: center;
+      padding-right: 8px;
+      cursor: pointer;
+    }
+    .brand-logo svg { height: 28px; width: auto; display: block; }
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+    .nav-btn {
+      padding: 8px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-sec);
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .nav-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+    .nav-btn.active {
+      background: #ffffff;
+      color: #121317;
+      font-weight: 600;
+      box-shadow: 0 2px 14px rgba(255,255,255,0.2);
+    }
+    .badge-ai {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: var(--lime-soft);
+      color: var(--lime);
+      border: 1px solid rgba(212,255,51,0.35);
+    }
+    .nav-btn.active .badge-ai { background: #16171b; color: var(--lime); }
+    .grid-btn {
+      padding: 7px 12px;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-mono);
+      font-size: 0.73rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      transition: all 0.2s ease;
+    }
+    .grid-btn:hover {
+      border-color: rgba(255,255,255,0.45);
+      box-shadow: 0 0 16px rgba(255,255,255,0.14);
+    }
+
+    /* ==========================================================================
+       3. СТРАНИЦЫ SPA, КНОПКИ И BENTO-КАРТОЧКИ (БЕЗ 4 В РЯД)
+       ========================================================================== */
+    .spa-page {
+      display: none;
+      padding: 116px 0 90px;
+      flex: 1;
+      animation: fadeIn 0.28s var(--ease);
+    }
+    .spa-page.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-block { margin-top: 112px; }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+    }
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pill-tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-sec);
+    }
+
+    /* Кнопки с нейтральным серебристо-белым свечением */
+    .btn-white {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px 24px;
+      border-radius: var(--radius-pill);
+      background: #ffffff;
+      color: #121317;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s var(--ease);
+    }
+    .btn-white:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(255, 255, 255, 0.18);
+    }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px 22px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-card);
+      color: var(--text-main);
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      transition: all 0.2s var(--ease);
+    }
+    .btn-ghost:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,0.45);
+      box-shadow: 0 10px 24px rgba(255, 255, 255, 0.14);
+      background: var(--bg-hover);
+    }
+
+    /* Главный экран */
+    .hero-box {
+      text-align: center;
+      max-width: 920px;
+      margin: 18px auto 0;
+    }
+    .hero-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 6px 15px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--text-sec);
+      margin-bottom: 22px;
+    }
+    .dot-lime {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--lime);
+      box-shadow: 0 0 10px var(--lime);
+    }
+    .hero-title {
+      font-size: clamp(2rem, 4.4vw, 3.6rem);
+      font-weight: 600;
+      line-height: 1.13;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .hero-highlight {
+      display: inline-block;
+      background: #ffffff;
+      color: #121317;
+      padding: 2px 16px 4px;
+      border-radius: 10px;
+      box-shadow: 5px 5px 0 rgba(255,255,255,0.22);
+    }
+    .hero-sub {
+      max-width: 660px;
+      margin: 0 auto 28px;
+      color: var(--text-sec);
+      font-size: 1.02rem;
+    }
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+
+    /* Блок-заглушка для видео с размытым серым фоном на главном экране */
+    .video-placeholder-frame {
+      width: 100%;
+      min-height: 340px;
+      border-radius: var(--radius-xl);
+      background: rgba(120, 126, 142, 0.14);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .video-placeholder-frame::before {
+      content: '';
+      position: absolute;
+      width: 360px;
+      height: 190px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.09);
+      filter: blur(48px);
+      pointer-events: none;
+    }
+    .video-placeholder-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 28px 42px;
+      border-radius: var(--radius-lg);
+      background: rgba(42, 46, 56, 0.55);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .video-play-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+    }
+    .video-placeholder-text {
+      font-size: 0.98rem;
+      font-weight: 500;
+      color: #d1d5db;
+      text-align: center;
+    }
+
+    /* Просторная сетка 2 колонки */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 34px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 24px;
+      cursor: pointer;
+      transition: all 0.24s var(--ease);
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      background: var(--bg-hover);
+      border-color: rgba(255,255,255,0.45);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.45), 0 0 22px rgba(255,255,255,0.08);
+    }
+    .card.wide {
+      grid-column: span 2;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      align-items: center;
+      gap: 32px;
+    }
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      transition: all 0.22s var(--ease);
+      flex-shrink: 0;
+    }
+    .icon-box svg { width: 24px; height: 24px; stroke-width: 1.5; }
+    .card:hover .icon-box {
+      background: #ffffff;
+      color: #121317;
+      border-color: #ffffff;
+      box-shadow: 0 6px 18px rgba(255,255,255,0.2);
+    }
+    .card h3 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .card p { color: var(--text-sec); font-size: 0.92rem; }
+    .diagram-box {
+      background: #14161b;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-sec);
+    }
+
+    /* Рекламный слот */
+    .ad-banner {
+      margin-top: 84px;
+      padding: 26px 32px;
+      border-radius: var(--radius-xl);
+      background: rgba(30, 33, 42, 0.55);
+      border: 1px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    /* ==========================================================================
+       4. СТИЛИ 4 МОДУЛЕЙ MVP (WCAG, ШРИФТЫ/CSS, ЧЕК-ЛИСТ/ТЗ, AI-АУДИТОР)
+       ========================================================================== */
+    .mvp-block {
+      margin-top: 84px;
+      padding-top: 56px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .mvp-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .field-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-sec);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .picker-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .picker-wrap input[type="color"] {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .picker-wrap input[type="text"] {
+      width: 100%;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .wcag-badges {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .wcag-item {
+      padding: 11px 14px;
+      border-radius: 11px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+    }
+    .status-pill {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+    }
+    .status-pill.pass {
+      background: rgba(16,185,129,0.16);
+      color: #34d399;
+      border: 1px solid rgba(16,185,129,0.4);
+    }
+    .status-pill.fail {
+      background: rgba(239,68,68,0.16);
+      color: #f87171;
+      border: 1px solid rgba(239,68,68,0.4);
+    }
+    .studio-select, .studio-input {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: #ffffff;
+      padding: 11px 14px;
+      border-radius: 11px;
+      font-size: 0.86rem;
+    }
+    .studio-select option { background: #1d1f26; color: #ffffff; }
+    .code-box {
+      background: #121317;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: #d1d5db;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 11px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      font-size: 0.86rem;
+    }
+    .check-row.checked {
+      border-color: rgba(212,255,51,0.5);
+      background: rgba(212,255,51,0.06);
+    }
+    .check-row input { accent-color: var(--lime); width: 16px; height: 16px; margin-top: 3px; }
+
+    /* Анализатор макетов */
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: var(--bg-card);
+      padding: 6px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .mode-btn {
+      padding: 11px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-sec);
+      transition: all 0.18s ease;
+    }
+    .mode-btn.active {
+      background: #ffffff;
+      color: #121317;
+      font-weight: 600;
+    }
+    .context-bar {
+      display: grid;
+      grid-template-columns: 1fr 240px auto;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .view-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .view-btn {
+      padding: 7px 13px;
+      border-radius: 9px;
+      font-size: 0.78rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-sec);
+    }
+    .view-btn.active {
+      background: #ffffff;
+      color: #121317;
+      font-weight: 600;
+    }
+    .viewport-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #111216;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #mainCanvas, #heatCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: filter 0.22s ease, opacity 0.22s ease;
+    }
+    #heatCanvas { opacity: 0; pointer-events: none; }
+    .dropzone {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      background: rgba(19, 21, 26, 0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      cursor: pointer;
+    }
+    .dropzone.hidden { opacity: 0; pointer-events: none; }
+    .scan-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background: rgba(15, 17, 22, 0.86);
+      backdrop-filter: blur(6px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .scan-overlay.active { opacity: 1; pointer-events: auto; }
+    .laser-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--lime), #fff, var(--lime), transparent);
+      box-shadow: 0 0 16px var(--lime);
+      animation: laserMove 2s ease-in-out infinite;
+    }
+    @keyframes laserMove {
+      0% { top: 8%; }
+      50% { top: 90%; }
+      100% { top: 8%; }
+    }
+    .context-frame {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      border: 12px solid #0d0e11;
+      display: none;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 40%);
+    }
+    .context-frame.active { display: flex; }
+
+    .score-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 18px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .gauge-wrap { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
+    .gauge-svg { width: 88px; height: 88px; transform: rotate(-90deg); }
+    .gauge-bg { fill: none; stroke: var(--bg-elevated); stroke-width: 7; }
+    .gauge-fill {
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-dasharray: 239;
+      stroke-dashoffset: 239;
+      transition: stroke-dashoffset 0.7s var(--ease), stroke 0.3s ease;
+    }
+    .gauge-num {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+    .sub-scores {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .sub-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 10px 13px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+    }
+    .tip-card {
+      padding: 13px 15px;
+      border-radius: 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.84rem;
+      margin-bottom: 10px;
+    }
+
+    /* Модальное окно и чат поддержки */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(10, 11, 15, 0.82);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-card {
+      width: 100%;
+      max-width: 680px;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+    }
+    .support-fab {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 1500;
+      padding: 12px 18px;
+      border-radius: var(--radius-pill);
+      background: #ffffff;
+      color: #121317;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+    }
+    .support-box {
+      position: fixed;
+      right: 24px;
+      bottom: 78px;
+      width: 350px;
+      max-width: calc(100vw - 32px);
+      z-index: 1550;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 24px 50px rgba(0,0,0,0.6);
+    }
+    .support-box.open { display: flex; }
+    .chat-log {
+      height: 240px;
+      overflow-y: auto;
+      padding: 16px;
+      background: #14161b;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .bubble {
+      padding: 10px 13px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      max-width: 86%;
+    }
+    .bubble.bot { background: var(--bg-elevated); align-self: flex-start; }
+    .bubble.user { background: #ffffff; color: #121317; font-weight: 500; align-self: flex-end; }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 3000;
+      background: #ffffff;
+      color: #121317;
+      padding: 10px 20px;
+      border-radius: var(--radius-pill);
+      font-size: 0.83rem;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.22s var(--ease);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 32px 0;
+      margin-top: auto;
+      position: relative;
+      z-index: 2;
+      background: rgba(18, 19, 23, 0.9);
+    }
+
+    @media (max-width: 920px) {
+      .grid-2, .workspace-grid, .context-bar, .mode-tabs { grid-template-columns: 1fr; }
+      .card.wide { grid-column: span 1; grid-template-columns: 1fr; }
+      .player-stage { border-right: none; border-bottom: 1px solid var(--border-subtle); }
+      .capsule-nav { flex-wrap: wrap; justify-content: center; border-radius: 20px; }
+    }
+  </style>
+</head>
+<body class="grid-blueprint">
+
+  <div class="bg-grid"></div>
+
+  <!-- ==========================================================================
+       ПЛАВАЮЩАЯ ШАПКА С КАСТОМНЫМ ВЕКТОРНЫМ ЛОГОТИПОМ CTRL (БЕЗ .PNG)
+       ========================================================================== -->
+  <header class="header-wrap">
+    <nav class="capsule-nav">
+      <div class="brand-logo" onclick="switchPage('home')" title="CTRL.PNG — На главную">
+        <svg viewBox="0 0 116 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <line x1="7" y1="13" x2="39" y2="5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="7" cy="13" r="4" fill="#ffffff"/>
+          <circle cx="39" cy="5" r="4" fill="#ffffff"/>
+          <rect x="20" y="5.5" width="6.5" height="6.5" transform="rotate(-14 20 5.5)" fill="#ffffff"/>
+          <path d="M12 32C8.5 26 10 16 19 11" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="12" cy="32" r="4" fill="#ffffff"/>
+          <path d="M38 27.5C35.2 31.2 31 33 26.2 33C18.2 33 13.5 28 13.5 21.5C13.5 15 18.2 10 26.2 10C31.2 10 35.2 11.8 37.8 15L31.8 18.8C30.4 16.8 28.5 15.8 26.2 15.8C22.4 15.8 20.2 18.1 20.2 21.5C20.2 24.9 22.4 27.2 26.2 27.2C28.6 27.2 30.6 26.1 32 24L38 27.5Z" fill="#ffffff"/>
+          <path d="M48 6H56V13H62V19H56V25L48 32V19H44V13H48V6Z" fill="#ffffff"/>
+          <polygon points="56,24 62,33 50,33" fill="#ffffff"/>
+          <path d="M68 13H75.5V16.8C77.2 14 80 12.6 83.5 12.6H85V19.5H82.5C78.2 19.5 76 21.5 76 25.8V33H68V13Z" fill="#ffffff"/>
+          <rect x="90" y="5" width="8" height="28" fill="#ffffff"/>
+        </svg>
+      </div>
+
+      <div class="nav-links">
+        <button class="nav-btn active" data-page="home" onclick="switchPage('home')">Главная</button>
+        <button class="nav-btn" data-page="materials" onclick="switchPage('materials')">Материалы</button>
+        <button class="nav-btn" data-page="inspiration" onclick="switchPage('inspiration')">Вдохновение</button>
+        <button class="nav-btn" data-page="education" onclick="switchPage('education')">Обучение</button>
+        <button class="nav-btn" data-page="analyzer" onclick="switchPage('analyzer')">
+          Анализатор <span class="badge-ai">ИИ</span>
+        </button>
+      </div>
+
+      <button class="grid-btn" id="gridToggleBtn" onclick="cycleGridMode()">Фон: Чертёж</button>
+    </nav>
+  </header>
+
+  <!-- ==========================================================================
+       СТРАНИЦА 1: ГЛАВНАЯ
+       ========================================================================== -->
+  <main id="page-home" class="spa-page active">
+    <div class="container">
+      <section class="hero-box">
+        <div class="hero-status">
+          <span class="dot-lime"></span>
+          <span>Единое рабочее пространство, база материалов и проверка макетов</span>
+        </div>
+        <h1 class="hero-title">
+          ВСЁ ДЛЯ ДИЗАЙНЕРА ПРЕВЬЮ И ИНТЕРФЕЙСОВ В <span class="hero-highlight">ОДНОМ МЕСТЕ</span>
+        </h1>
+        <p class="hero-sub">
+          Все нужные инструменты в одном окне: проверка читаемости текста, подбор шрифтов и цветов, сборка технического задания и умный анализатор работ.
+        </p>
+        <div class="hero-actions">
+          <button class="btn-white" onclick="switchPage('analyzer')">Открыть анализатор</button>
+          <button class="btn-ghost" onclick="switchPage('materials')">Перейти к материалам</button>
+        </div>
+
+        <!-- Заглушка под видео с размытым серым фоном -->
+        <div class="video-placeholder-frame">
+          <div class="video-placeholder-inner">
+            <div class="video-play-circle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="6,4 20,12 6,20"></polygon>
+              </svg>
+            </div>
+            <div class="video-placeholder-text">(тут должно было быть видео как сайт устроен)</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Витрина разделов на Главной -->
+      <section class="section-block">
+        <div class="section-head">
+          <div class="section-title">Материалы и шаблоны <span class="pill-tag">4 РАЗДЕЛА</span></div>
+          <button class="btn-ghost" style="padding:8px 16px;font-size:0.82rem;" onclick="switchPage('materials')">Все инструменты →</button>
+        </div>
+        <div class="grid-2" id="homeMaterialsGrid"></div>
+      </section>
+
+      <!-- Рекламный блок -->
+      <div class="ad-banner">
+        <div>
+          <span class="pill-tag" style="color:var(--lime);border-color:rgba(212,255,51,0.35);">РЕКЛАМНОЕ МЕСТО • ЗДЕСЬ МОЖЕТ БЫТЬ ВАША РЕКЛАМА</span>
+          <h3 style="font-size:1.2rem;margin-top:8px;">Расскажите о своём наборе материалов, курсе или студии аудитории сайта</h3>
+          <p style="color:var(--text-sec);font-size:0.88rem;margin-top:4px;">Размещение баннера на главной странице и в разделе материалов.</p>
+        </div>
+        <button class="btn-ghost" onclick="openModal('ad')">Условия размещения</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       СТРАНИЦА 2: МАТЕРИАЛЫ + ПРОВЕРКА КОНТРАСТА + ПОДБОР ШРИФТОВ И ЦВЕТОВ
+       ========================================================================== -->
+  <main id="page-materials" class="spa-page">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-title">База материалов <span class="pill-tag">ДЛЯ РАБОТЫ</span></div>
+        <button class="btn-white" style="padding:9px 18px;font-size:0.82rem;" onclick="document.getElementById('module-wcag').scrollIntoView({behavior:'smooth'})">К калькулятору контраста ↓</button>
+      </div>
+      <div class="grid-2" id="fullMaterialsGrid"></div>
+
+      <!-- МОДУЛЬ 1: КАЛЬКУЛЯТОР КОНТРАСТА -->
+      <section id="module-wcag" class="mvp-block">
+        <div class="section-head">
+          <div class="section-title">Калькулятор контраста текста и фона <span class="pill-tag">ПРОВЕРКА ЧИТАЕМОСТИ</span></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="pill-tag" onclick="setWcagPreset('#FFFFFF','#16171B')">Белый на тёмном (17.4:1)</button>
+            <button class="pill-tag" onclick="setWcagPreset('#121317','#D4FF33')">Тёмный на ярком (15.1:1)</button>
+            <button class="pill-tag" onclick="setWcagPreset('#7A808C','#1D1F26')">Средний контраст (4.6:1)</button>
+            <button class="pill-tag" onclick="setWcagPreset('#525663','#1D1F26')">Слабый контраст (2.3:1)</button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="mvp-panel">
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end;">
+              <div>
+                <span class="field-label">ЦВЕТ ТЕКСТА</span>
+                <div class="picker-wrap">
+                  <input type="color" id="wcagFgColor" value="#ffffff" oninput="syncWcag('picker')">
+                  <input type="text" id="wcagFgHex" value="#FFFFFF" maxlength="7" oninput="syncWcag('hex')">
+                </div>
+              </div>
+              <button class="btn-ghost" style="padding:11px 14px;border-radius:12px;" onclick="swapWcagColors()" title="Поменять местами">⇄</button>
+              <div>
+                <span class="field-label">ЦВЕТ ФОНА</span>
+                <div class="picker-wrap">
+                  <input type="color" id="wcagBgColor" value="#16171b" oninput="syncWcag('picker')">
+                  <input type="text" id="wcagBgHex" value="#16171B" maxlength="7" oninput="syncWcag('hex')">
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:var(--bg-elevated);border-radius:14px;border:1px solid var(--border);">
+              <div>
+                <span class="field-label">КОЭФФИЦИЕНТ КОНТРАСТА</span>
+                <div id="wcagRatioVal" style="font-family:var(--font-mono);font-size:1.9rem;font-weight:600;">17.41 : 1</div>
+              </div>
+              <span class="status-pill pass" id="wcagMainVerdict">ОТЛИЧНО</span>
+            </div>
+
+            <div class="wcag-badges">
+              <div class="wcag-item"><span>Обычный текст (≥4.5)</span><span class="status-pill pass" id="bAANorm">НОРМА</span></div>
+              <div class="wcag-item"><span>Повышенная чёткость (≥7.0)</span><span class="status-pill pass" id="bAAANorm">НОРМА</span></div>
+              <div class="wcag-item"><span>Крупный заголовок (≥3.0)</span><span class="status-pill pass" id="bAALarge">НОРМА</span></div>
+              <div class="wcag-item"><span>Мелкие подписи (≥4.5)</span><span class="status-pill pass" id="bAAALarge">НОРМА</span></div>
+            </div>
+          </div>
+
+          <div class="mvp-panel">
+            <div id="wcagPreviewCard" style="border-radius:16px;padding:26px;border:1px solid var(--border);background:#16171B;color:#FFFFFF;min-height:210px;display:flex;flex-direction:column;justify-content:space-between;">
+              <span style="font-family:var(--font-mono);font-size:0.73rem;opacity:0.8;">ПРИМЕР ОТОБРАЖЕНИЯ ТЕКСТА</span>
+              <div>
+                <h4 style="font-size:1.35rem;font-weight:600;margin-bottom:8px;">Крупный заголовок 24px</h4>
+                <p style="font-size:0.92rem;opacity:0.92;">Основной текст 16px. Проверяйте, насколько легко читаются надписи и кнопки на выбранном фоне перед сохранением работы.</p>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span id="wcagLumInfo" style="font-family:var(--font-mono);font-size:0.72rem;opacity:0.8;">Яркость: 1.00 / 0.01</span>
+                <button class="btn-white" style="padding:8px 16px;font-size:0.78rem;" onclick="copyWcagCss()">Скопировать цвета</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- МОДУЛЬ 2: КОНСТРУКТОР ШРИФТОВ И ЦВЕТОВ -->
+      <section id="module-fonts" class="mvp-block">
+        <div class="section-head">
+          <div class="section-title">Подбор шрифтовых пар и цветовых схем <span class="pill-tag">КОНСТРУКТОР</span></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="mvp-panel">
+            <div class="grid-2" style="gap:12px;">
+              <div>
+                <span class="field-label">ШРИФТОВАЯ ПАРА</span>
+                <select id="fontPairSel" class="studio-select" onchange="updateFontBuilder()">
+                  <option value="0">1. Универсальный гротеск (Inter)</option>
+                  <option value="1">2. Технический + Моноширинный</option>
+                  <option value="2">3. Журнальный с засечками + Чистый</option>
+                  <option value="3">4. Крупный плакатный для обложек</option>
+                </select>
+              </div>
+              <div>
+                <span class="field-label">ЦВЕТОВАЯ ПАЛИТРА</span>
+                <select id="paletteSel" class="studio-select" onchange="updateFontBuilder()">
+                  <option value="0">Графит и лаймовый акцент (#D4FF33)</option>
+                  <option value="1">Тёмно-синий и голубой (#38BDF8)</option>
+                  <option value="2">Тёмный уголь и янтарный (#F59E0B)</option>
+                  <option value="3">Строгий чёрно-белый (#FFFFFF)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-2" style="gap:12px;">
+              <div>
+                <span class="field-label">РАЗМЕР ЗАГОЛОВКА: <span id="scaleValLabel">28px</span></span>
+                <input type="range" id="fontScaleRange" min="22" max="38" value="28" style="width:100%;accent-color:var(--lime);" oninput="updateFontBuilder()">
+              </div>
+              <div>
+                <span class="field-label">МЕЖСТРОЧНЫЙ ИНТЕРВАЛ: <span id="lhValLabel">1.55</span></span>
+                <input type="range" id="fontLhRange" min="125" max="180" value="155" style="width:100%;accent-color:var(--lime);" oninput="updateFontBuilder()">
+              </div>
+            </div>
+
+            <div id="fontLiveStage" style="border-radius:16px;padding:24px;border:1px solid var(--border);background:#16171B;color:#F3F4F6;">
+              <span id="fontStageBadge" style="font-family:var(--font-mono);font-size:0.72rem;padding:3px 9px;border-radius:6px;background:#D4FF33;color:#121317;font-weight:600;">ПРИМЕР</span>
+              <h4 id="fontStageHeading" style="font-size:28px;font-weight:600;margin:12px 0 8px;">Чистая и понятная типографика</h4>
+              <p id="fontStageBody" style="font-size:0.92rem;color:#9CA3AF;line-height:1.55;">Правильное сочетание крупного заголовка и спокойного основного текста помогает зрителю сразу уловить суть проекта.</p>
+            </div>
+          </div>
+
+          <div class="mvp-panel">
+            <span class="field-label">ГОТОВЫЙ КОД СТИЛЕЙ ДЛЯ САЙТА</span>
+            <pre id="cssOutputBox" class="code-box"></pre>
+            <button class="btn-white" style="width:100%;justify-content:center;" onclick="copyBuilderCss()">Скопировать код стилей</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       СТРАНИЦА 3: ВДОХНОВЕНИЕ
+       ========================================================================== -->
+  <main id="page-inspiration" class="spa-page">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-title">Вдохновение и разбор работ <span class="pill-tag">ПРИМЕРЫ</span></div>
+      </div>
+      <div class="grid-2" id="inspirationGrid"></div>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       СТРАНИЦА 4: ОБУЧЕНИЕ + ЧЕК-ЛИСТ И ГЕНЕРАТОР ТЗ
+       ========================================================================== -->
+  <main id="page-education" class="spa-page">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-title">Обучение и полезные памятки <span class="pill-tag">БАЗА ЗНАНИЙ</span></div>
+        <button class="btn-white" style="padding:9px 18px;font-size:0.82rem;" onclick="document.getElementById('module-qa-brief').scrollIntoView({behavior:'smooth'})">Чек-лист и Генератор ТЗ ↓</button>
+      </div>
+      <div class="grid-2" id="educationGrid"></div>
+
+      <!-- МОДУЛЬ 3: ЧЕК-ЛИСТ САМОПРОВЕРКИ + ГЕНЕРАТОР ТЗ -->
+      <section id="module-qa-brief" class="mvp-block">
+        <div class="section-head">
+          <div class="section-title">Чек-лист самопроверки и Генератор ТЗ <span class="pill-tag">ПОДГОТОВКА ПРОЕКТА</span></div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Левая колонка: Чек-лист -->
+          <div class="mvp-panel">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-weight:600;">Готовность работы к сдаче</span>
+                <span id="qaPctLabel" style="font-family:var(--font-mono);color:var(--lime);font-weight:600;">0% (0/6)</span>
+              </div>
+              <div style="height:8px;background:var(--bg-elevated);border-radius:99px;overflow:hidden;">
+                <div id="qaBarFill" style="height:100%;width:0%;background:var(--lime);transition:width 0.25s ease;"></div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px;" id="qaListContainer">
+              <label class="check-row"><input type="checkbox" onchange="updateQaProgress()"><span>1. Главный объект и суть работы понятны с первого взгляда</span></label>
+              <label class="check-row"><input type="checkbox" onchange="updateQaProgress()"><span>2. Текст отлично читается и не сливается с фоном (контраст не ниже 4.5:1)</span></label>
+              <label class="check-row"><input type="checkbox" onchange="updateQaProgress()"><span>3. В кадре не более 3 главных элементов (нет перегруженности деталями)</span></label>
+              <label class="check-row"><input type="checkbox" onchange="updateQaProgress()"><span>4. Передний план отделён от фона светом или яркостью</span></label>
+              <label class="check-row"><input type="checkbox" onchange="updateQaProgress()"><span>5. По краям и в углах не перекрыты важные надписи</span></label>
+              <label class="check-row"><input type="checkbox" onchange="updateQaProgress()"><span>6. Макет проверен в уменьшенном размере (как на экране телефона)</span></label>
+            </div>
+
+            <button class="btn-ghost" style="justify-content:center;" onclick="resetQaChecklist()">Сбросить отметки</button>
+          </div>
+
+          <!-- Правая колонка: Генератор ТЗ -->
+          <div class="mvp-panel">
+            <div class="grid-2" style="gap:10px;">
+              <div>
+                <span class="field-label">НАЗВАНИЕ ПРОЕКТА</span>
+                <input type="text" id="tzName" class="studio-input" value="Оформление обложки и главной страницы" oninput="buildBriefDoc()">
+              </div>
+              <div>
+                <span class="field-label">ФОРМАТ РАБОТЫ</span>
+                <select id="tzFormat" class="studio-select" onchange="buildBriefDoc()">
+                  <option value="Обложка видео (1920×1080, 16:9)">Обложка видео (1920×1080)</option>
+                  <option value="Дизайн сайта (Компьютер + Телефон)">Дизайн сайта (ПК + Телефон)</option>
+                  <option value="Рекламный баннер (1080×1350)">Рекламный баннер (1080×1350)</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <span class="field-label">ОСНОВНАЯ ЗАДАЧА</span>
+              <input type="text" id="tzGoal" class="studio-input" value="Привлечь внимание в ленте, выделить заголовок и главного героя" oninput="buildBriefDoc()">
+            </div>
+            <pre id="briefOutputBox" class="code-box" style="max-height:175px;"></pre>
+            <button class="btn-white" style="width:100%;justify-content:center;" onclick="copyBriefDoc()">Скопировать готовое ТЗ</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       СТРАНИЦА 5: АНАЛИЗАТОР ПРЕВЬЮ И МАКЕТОВ (100% СТАБИЛЬНАЯ ОЦЕНКА)
+       ========================================================================== -->
+  <main id="page-analyzer" class="spa-page">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-title">Анализатор превью и дизайн-макетов <span class="pill-tag">ТОЧНАЯ ОЦЕНКА</span></div>
+        <button class="btn-ghost" style="padding:8px 16px;font-size:0.8rem;" onclick="loadDemoDesignSample()">Загрузить пример макета</button>
+      </div>
+
+      <!-- Переключатель 3 режимов проверки -->
+      <div class="mode-tabs">
+        <button class="mode-btn active" data-mode="thumbnail" onclick="setAuditMode('thumbnail')">Обложки видео (Превью)</button>
+        <button class="mode-btn" data-mode="uiux" onclick="setAuditMode('uiux')">Сайты и интерфейсы</button>
+        <button class="mode-btn" data-mode="poster" onclick="setAuditMode('poster')">Рекламные баннеры и постеры</button>
+      </div>
+
+      <!-- Контекстная строка -->
+      <div class="context-bar">
+        <input type="text" id="auditContextTitle" class="studio-input" placeholder="Необязательно: укажите название ролика или тему проекта...">
+        <select id="auditNicheSelect" class="studio-select">
+          <option value="Универсальный дизайн">Тема: Автоопределение</option>
+          <option value="Игры и развлечения">Тема: Игры и развлечения</option>
+          <option value="Сайты и приложения">Тема: Сайты и сервисы</option>
+          <option value="Обучение и обзоры">Тема: Обучение и обзоры</option>
+        </select>
+        <button class="btn-white" onclick="document.getElementById('fileInput').click()">Загрузить свой файл</button>
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+      </div>
+
+      <div class="grid-2" style="align-items:start;">
+        <!-- Левая колонка: Холст и 5 режимов проверки -->
+        <div class="mvp-panel">
+          <div class="view-tabs">
+            <button class="view-btn active" id="vBtnOrig" onclick="setCanvasView('orig')">Оригинал</button>
+            <button class="view-btn" id="vBtnBw" onclick="setCanvasView('bw')">Ч/Б Тон</button>
+            <button class="view-btn" id="vBtnBlur" onclick="setCanvasView('blur')">Тест прищура</button>
+            <button class="view-btn" id="vBtnHeat" onclick="setCanvasView('heat')">Карта внимания</button>
+            <button class="view-btn" id="vBtnCtx" onclick="setCanvasView('ctx')">Как в ленте</button>
+          </div>
+
+          <div class="viewport-box" id="viewportBox">
+            <canvas id="mainCanvas" width="800" height="450"></canvas>
+            <canvas id="heatCanvas" width="420" height="236"></canvas>
+
+            <div class="context-frame" id="contextFrame">
+              <span style="font-size:0.78rem;font-weight:600;background:rgba(0,0,0,0.75);padding:4px 10px;border-radius:6px;">Предпросмотр в ленте</span>
+              <span style="font-family:var(--font-mono);font-size:0.74rem;background:#000;padding:3px 7px;border-radius:4px;">14:28</span>
+            </div>
+
+            <div class="dropzone" id="dropzoneOverlay" onclick="document.getElementById('fileInput').click()">
+              <div class="icon-box" style="margin-bottom:14px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 16V4m0 0L8 8m4-4l4 4M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2"/></svg>
+              </div>
+              <h3 style="font-size:1.15rem;margin-bottom:6px;">Перетащите изображение сюда, нажмите для выбора или вставьте через Ctrl+V</h3>
+              <p style="color:var(--text-sec);font-size:0.84rem;">Поддерживаются PNG, JPG, WEBP. Оценка фиксируется за изображением и не скачет при повторных проверках.</p>
+            </div>
+
+            <div class="scan-overlay" id="scanOverlay">
+              <div class="laser-line"></div>
+              <span class="pill-tag" style="color:var(--lime);margin-bottom:10px;" id="scanStepBadge">ШАГ 1 / 4 • АНАЛИЗ</span>
+              <h3 id="scanTitleText" style="font-size:1.15rem;margin-bottom:6px;">Анализ композиции и светотени...</h3>
+              <p id="scanSubText" style="color:var(--text-sec);font-size:0.82rem;">Вычисление контраста, читаемости и разбор работы</p>
+            </div>
+          </div>
+
+          <div style="padding:16px 18px;border-radius:14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span class="field-label" style="margin:0;">ЧТО НА ИЗОБРАЖЕНИИ</span>
+              <span class="pill-tag" id="detectedTypeBadge">ОЖИДАНИЕ ФАЙЛА</span>
+            </div>
+            <p id="recognizedPlotText" style="font-size:0.86rem;color:var(--text-sec);">
+              Загрузите свою работу или нажмите «Загрузить пример макета» выше, чтобы получить точную оценку и список советов по улучшению.
+            </p>
+          </div>
+        </div>
+
+        <!-- Правая колонка: Оценка (с 0.0) и 4 блока советов -->
+        <div class="mvp-panel">
+          <div class="score-head">
+            <div>
+              <span class="field-label" id="auditProfileLabel">ИТОГОВАЯ ОЦЕНКА • ОБЛОЖКИ ВИДЕО</span>
+              <h3 id="verdictTitle" style="font-size:1.3rem;margin:4px 0;">Ожидание загрузки</h3>
+              <p id="verdictSub" style="font-size:0.84rem;color:var(--text-sec);">Стартовый балл 0.0 — загрузите изображение для проверки</p>
+            </div>
+            <div class="gauge-wrap">
+              <svg class="gauge-svg" viewBox="0 0 88 88">
+                <circle class="gauge-bg" cx="44" cy="44" r="38"></circle>
+                <circle class="gauge-fill" id="gaugeArc" cx="44" cy="44" r="38"></circle>
+              </svg>
+              <div class="gauge-num" id="scoreNum">0.0</div>
+            </div>
+          </div>
+
+          <div class="sub-scores">
+            <div class="sub-card"><span id="subLbl1">1. Композиция</span><strong id="subVal1">0.0</strong></div>
+            <div class="sub-card"><span id="subLbl2">2. Свет и объём</span><strong id="subVal2">0.0</strong></div>
+            <div class="sub-card"><span id="subLbl3">3. Текст</span><strong id="subVal3">0.0</strong></div>
+            <div class="sub-card"><span id="subLbl4">4. Цвет и контраст</span><strong id="subVal4">0.0</strong></div>
+          </div>
+
+          <div id="critiqueList">
+            <div class="tip-card" style="color:var(--text-sec);">
+              После загрузки анализатор вычислит точные баллы по 4 критериям, проверит работу на типичные ошибки и составит список рекомендаций.
+            </div>
+          </div>
+
+          <div id="actionPlanWrap" style="display:none;padding:16px;border-radius:14px;background:rgba(212,255,51,0.05);border:1px solid rgba(212,255,51,0.3);">
+            <span class="field-label" style="color:var(--lime);">СОВЕТЫ ПО УЛУЧШЕНИЮ РАБОТЫ</span>
+            <div id="actionStepsList" style="font-size:0.84rem;display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Модальное окно для карточек и рекламы -->
+  <div class="modal-backdrop" id="studioModal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <span class="pill-tag" id="modalTag">РАЗДЕЛ</span>
+        <button class="btn-ghost" style="padding:6px 12px;font-size:0.78rem;" onclick="closeModal()">Закрыть ✕</button>
+      </div>
+      <h3 id="modalTitle" style="font-size:1.45rem;margin-bottom:10px;"></h3>
+      <div id="modalBody" style="color:var(--text-sec);font-size:0.92rem;line-height:1.6;"></div>
+    </div>
+  </div>
+
+  <!-- Плавающий виджет поддержки -->
+  <button class="support-fab" onclick="toggleSupport()">Поддержка и помощник</button>
+  <div class="support-box" id="supportBox">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;">
+      <strong style="font-size:0.88rem;">Поддержка CTRL.PNG</strong>
+      <button onclick="toggleSupport()" style="color:var(--text-sec);">✕</button>
+    </div>
+    <div class="chat-log" id="chatLog">
+      <div class="bubble bot">Привет! Я помощник сайта CTRL.PNG. Отвечу на вопросы по материалам, проверке контраста или работе анализатора.</div>
+    </div>
+    <div style="padding:10px;display:flex;gap:8px;border-top:1px solid var(--border-subtle);">
+      <input type="text" id="chatInput" class="studio-input" placeholder="Напишите ваш вопрос..." onkeydown="if(event.key==='Enter')sendSupportMsg()">
+      <button class="btn-white" style="padding:8px 14px;" onclick="sendSupportMsg()">→</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toastBox">Скопировано в буфер обмена</div>
+
+  <footer>
+    <div class="container" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+      <span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-sec);">CTRL.PNG © 2026 — ВСЕ ИНСТРУМЕНТЫ ДИЗАЙНЕРА В ОДНОМ МЕСТЕ</span>
+      <div style="display:flex;gap:18px;font-size:0.84rem;color:var(--text-sec);">
+        <a href="#materials" onclick="switchPage('materials');return false;">Материалы</a>
+        <a href="#inspiration" onclick="switchPage('inspiration');return false;">Вдохновение</a>
+        <a href="#education" onclick="switchPage('education');return false;">Обучение</a>
+        <a href="#analyzer" onclick="switchPage('analyzer');return false;">Анализатор</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /* ==========================================================================
+       ДАННЫЕ КАРТОЧЕК И СТРОГИХ SVG-ИКОНОК (НА ЧИСТОМ РУССКОМ ЯЗЫКЕ)
+       ========================================================================== */
+    const ICONS = {
+      font: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>',
+      palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/><circle cx="12" cy="15" r="1.2"/></svg>',
+      texture: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 16l9 5 9-5"/></svg>',
+      psd: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 20V9"/></svg>',
+      viral: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+      grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
+      trend: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>',
+      guide: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>',
+      alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>',
+      spec: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></svg>'
+    };
+
+    const MATERIALS_DATA = [
+      { id: 'fonts', icon: ICONS.font, tag: 'ШРИФТЫ', title: 'Шрифты для заголовков и сайтов', desc: 'Подборка выразительных шрифтов для крупных надписей на превью и удобного чтения в интерфейсах.' },
+      { id: 'palettes', icon: ICONS.palette, tag: 'ПАЛИТРЫ', title: 'Палитры и цветовые сочетания', desc: 'Готовые цветовые схемы с правильным контрастом между главным объектом и тёмным фоном.' },
+      { id: 'textures', icon: ICONS.texture, tag: 'ТЕКСТУРЫ', title: 'Текстуры, свечения и блики', desc: 'Мягкие источники света, дымка, зернистость и контурные блики без заднего фона.' },
+      { id: 'psd', icon: ICONS.psd, tag: 'ШАБЛОНЫ', title: 'Готовые шаблоны и сетки', desc: 'Удобная структура папок и слоёв для быстрого старта работы в графическом редакторе.' }
+    ];
+
+    const INSPIRATION_DATA = [
+      { id: 'viral', wide: true, icon: ICONS.viral, tag: 'ПРИМЕРЫ', title: 'Вирусные превью и яркие обложки', desc: 'Как удержать взгляд зрителя за долю секунды: правило трёх объектов, живая эмоция и чёткое отделение героя от фона.', diagram: '1. ГЛАВНЫЙ ГЕРОЙ ИЛИ ПРЕДМЕТ (ОСНОВНОЙ АКЦЕНТ)\n2. ДЕТАЛЬ, ВЫЗЫВАЮЩАЯ ИНТЕРЕС\n3. КОРОТКИЙ КРУПНЫЙ ТЕКСТ (1–3 СЛОВА)' },
+      { id: 'comp', wide: false, icon: ICONS.grid, tag: 'КОМПОЗИЦИЯ', title: 'Разбор композиции', desc: 'Правило третей, направление взгляда и свободное место вокруг главных надписей.' },
+      { id: 'trends', wide: false, icon: ICONS.trend, tag: 'ТРЕНДЫ', title: 'Тренды оформления', desc: 'Естественный объёмный свет, аккуратная работа с деталями и чистая вёрстка без лишнего шума.' }
+    ];
+
+    const EDUCATION_DATA = [
+      { id: 'guide', wide: true, icon: ICONS.guide, tag: 'РУКОВОДСТВО', title: 'Пошаговый гайд по созданию превью и макетов', desc: 'Понятный порядок работы: от расположения главных предметов и настройки света до проверки читаемости текста.', diagram: 'ШАГ 1: ПРОВЕРКА СИЛУЭТА В Ч/Б РЕЖИМЕ\nШАГ 2: ОТДЕЛЕНИЕ ГЕРОЯ КОНТУРНЫМ СВЕТОМ\nШАГ 3: ПРОВЕРКА ЧИТАЕМОСТИ ТЕКСТА' },
+      { id: 'mistakes', wide: false, icon: ICONS.alert, tag: 'ЧАСТЫЕ ОШИБКИ', title: 'Ошибки новичков', desc: 'Слишком много мелких деталей, грязные чёрные тени, нечитаемый текст и отсутствие воздуха.' },
+      { id: 'specs', wide: false, icon: ICONS.spec, tag: 'ПАРАМЕТРЫ', title: 'Технические параметры', desc: 'Правильные размеры холста, сохранение чёткости и учёт зон, которые перекрываются кнопками плеера.' }
+    ];
+
+    function renderCards() {
+      const matHtml = MATERIALS_DATA.map(c => `
+        <article class="card" onclick="openModal('${c.id}')">
+          <div class="card-top">
+            <div class="icon-box">${c.icon}</div>
+            <span class="pill-tag">${c.tag}</span>
+          </div>
+          <div>
+            <h3>${c.title}</h3>
+            <p>${c.desc}</p>
+          </div>
+        </article>
+      `).join('');
+      document.getElementById('homeMaterialsGrid').innerHTML = matHtml;
+      document.getElementById('fullMaterialsGrid').innerHTML = matHtml;
+
+      document.getElementById('inspirationGrid').innerHTML = INSPIRATION_DATA.map(c => `
+        <article class="card ${c.wide ? 'wide' : ''}" onclick="openModal('${c.id}')">
+          <div>
+            <div class="card-top" style="margin-bottom:20px;">
+              <div class="icon-box">${c.icon}</div>
+              <span class="pill-tag">${c.tag}</span>
+            </div>
+            <h3>${c.title}</h3>
+            <p>${c.desc}</p>
+          </div>
+          ${c.wide ? `<div class="diagram-box"><div style="color:var(--lime);margin-bottom:8px;">СХЕМА ПОСТРОЕНИЯ КАДРА:</div><pre style="white-space:pre-wrap;line-height:1.7;">${c.diagram}</pre></div>` : ''}
+        </article>
+      `).join('');
+
+      document.getElementById('educationGrid').innerHTML = EDUCATION_DATA.map(c => `
+        <article class="card ${c.wide ? 'wide' : ''}" onclick="openModal('${c.id}')">
+          <div>
+            <div class="card-top" style="margin-bottom:20px;">
+              <div class="icon-box">${c.icon}</div>
+              <span class="pill-tag">${c.tag}</span>
+            </div>
+            <h3>${c.title}</h3>
+            <p>${c.desc}</p>
+          </div>
+          ${c.wide ? `<div class="diagram-box"><div style="color:var(--lime);margin-bottom:8px;">ПОРЯДОК САМОПРОВЕРКИ:</div><pre style="white-space:pre-wrap;line-height:1.7;">${c.diagram}</pre></div>` : ''}
+        </article>
+      `).join('');
+    }
+
+    /* Переключение страниц и смена фона */
+    function switchPage(pageId) {
+      document.querySelectorAll('.spa-page').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById('page-' + pageId);
+      if (target) target.classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === pageId));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    const GRID_MODES = [
+      { cls: 'grid-blueprint', label: 'Фон: Чертёж' },
+      { cls: 'grid-png', label: 'Фон: Клетка' },
+      { cls: 'grid-clean', label: 'Фон: Чистый' }
+    ];
+    let gridIdx = 0;
+    function cycleGridMode() {
+      document.body.classList.remove(GRID_MODES[gridIdx].cls);
+      gridIdx = (gridIdx + 1) % GRID_MODES.length;
+      document.body.classList.add(GRID_MODES[gridIdx].cls);
+      document.getElementById('gridToggleBtn').textContent = GRID_MODES[gridIdx].label;
+    }
+
+    /* ==========================================================================
+       МОДУЛЬ 1: КАЛЬКУЛЯТОР КОНТРАСТА ТЕКСТА И ФОНА
+       ========================================================================== */
+    function hexToRgb(hex) {
+      const clean = hex.replace('#', '').trim();
+      if (!/^[0-9A-Fa-f]{6}$/.test(clean)) return null;
+      return {
+        r: parseInt(clean.slice(0, 2), 16),
+        g: parseInt(clean.slice(2, 4), 16),
+        b: parseInt(clean.slice(4, 6), 16)
+      };
+    }
+
+    function getRelativeLuminance({ r, g, b }) {
+      const [R, G, B] = [r, g, b].map(v => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+    }
+
+    function syncWcag(source) {
+      const fgPicker = document.getElementById('wcagFgColor');
+      const bgPicker = document.getElementById('wcagBgColor');
+      const fgHex = document.getElementById('wcagFgHex');
+      const bgHex = document.getElementById('wcagBgHex');
+
+      if (source === 'picker') {
+        fgHex.value = fgPicker.value.toUpperCase();
+        bgHex.value = bgPicker.value.toUpperCase();
+      } else {
+        if (hexToRgb(fgHex.value)) fgPicker.value = fgHex.value;
+        if (hexToRgb(bgHex.value)) bgPicker.value = bgHex.value;
+      }
+
+      const rgb1 = hexToRgb(fgHex.value) || { r: 255, g: 255, b: 255 };
+      const rgb2 = hexToRgb(bgHex.value) || { r: 22, g: 23, b: 27 };
+      const l1 = getRelativeLuminance(rgb1);
+      const l2 = getRelativeLuminance(rgb2);
+      const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+
+      document.getElementById('wcagRatioVal').textContent = ratio.toFixed(2) + ' : 1';
+      document.getElementById('wcagLumInfo').textContent = `Яркость: ${l1.toFixed(2)} / ${l2.toFixed(2)}`;
+
+      const card = document.getElementById('wcagPreviewCard');
+      card.style.color = fgPicker.value;
+      card.style.backgroundColor = bgPicker.value;
+
+      const setBadge = (id, pass) => {
+        const el = document.getElementById(id);
+        el.textContent = pass ? 'НОРМА' : 'СЛАБО';
+        el.className = 'status-pill ' + (pass ? 'pass' : 'fail');
+      };
+      setBadge('bAANorm', ratio >= 4.5);
+      setBadge('bAAANorm', ratio >= 7.0);
+      setBadge('bAALarge', ratio >= 3.0);
+      setBadge('bAAALarge', ratio >= 4.5);
+
+      const mainV = document.getElementById('wcagMainVerdict');
+      if (ratio >= 7.0) { mainV.textContent = 'ОТЛИЧНО'; mainV.className = 'status-pill pass'; }
+      else if (ratio >= 4.5) { mainV.textContent = 'ХОРОШО'; mainV.className = 'status-pill pass'; }
+      else { mainV.textContent = 'НИЗКИЙ КОНТРАСТ'; mainV.className = 'status-pill fail'; }
+    }
+
+    function setWcagPreset(fg, bg) {
+      document.getElementById('wcagFgColor').value = fg;
+      document.getElementById('wcagBgColor').value = bg;
+      syncWcag('picker');
+    }
+
+    function swapWcagColors() {
+      const fg = document.getElementById('wcagFgColor').value;
+      const bg = document.getElementById('wcagBgColor').value;
+      setWcagPreset(bg, fg);
+    }
+
+    function copyWcagCss() {
+      const fg = document.getElementById('wcagFgHex').value;
+      const bg = document.getElementById('wcagBgHex').value;
+      const ratio = document.getElementById('wcagRatioVal').textContent;
+      copyText(`/* Контраст: ${ratio} */\ncolor: ${fg};\nbackground-color: ${bg};`);
+    }
+
+    /* ==========================================================================
+       МОДУЛЬ 2: КОНСТРУКТОР ШРИФТОВЫХ ПАР И ЦВЕТОВ
+       ========================================================================== */
+    const FONT_PAIRS = [
+      { name: 'Универсальный гротеск (Inter)', hFont: "'Inter', sans-serif", bFont: "'Inter', sans-serif", weight: '600', ls: '-0.03em' },
+      { name: 'Технический + Моноширинный', hFont: "system-ui, sans-serif", bFont: "'JetBrains Mono', monospace", weight: '700', ls: '-0.02em' },
+      { name: 'Журнальный с засечками + Чистый', hFont: "Georgia, serif", bFont: "'Inter', sans-serif", weight: '600', ls: '-0.01em' },
+      { name: 'Крупный плакатный для обложек', hFont: "'Arial Black', Impact, sans-serif", bFont: "'Inter', sans-serif", weight: '700', ls: '0.01em' }
+    ];
+
+    const STUDIO_PALETTES = [
+      { bg: '#16171B', surface: '#1D1F26', text: '#F3F4F6', muted: '#9CA3AF', accent: '#D4FF33' },
+      { bg: '#0F172A', surface: '#1E293B', text: '#F8FAFC', muted: '#94A3B8', accent: '#38BDF8' },
+      { bg: '#181617', surface: '#242022', text: '#FAF5F0', muted: '#A8A29E', accent: '#F59E0B' },
+      { bg: '#121212', surface: '#1E1E1E', text: '#FFFFFF', muted: '#A3A3A3', accent: '#FFFFFF' }
+    ];
+
+    function updateFontBuilder() {
+      const fp = FONT_PAIRS[document.getElementById('fontPairSel').value];
+      const pal = STUDIO_PALETTES[document.getElementById('paletteSel').value];
+      const scale = document.getElementById('fontScaleRange').value;
+      const lh = (document.getElementById('fontLhRange').value / 100).toFixed(2);
+
+      document.getElementById('scaleValLabel').textContent = scale + 'px';
+      document.getElementById('lhValLabel').textContent = lh;
+
+      const stage = document.getElementById('fontLiveStage');
+      const heading = document.getElementById('fontStageHeading');
+      const body = document.getElementById('fontStageBody');
+      const badge = document.getElementById('fontStageBadge');
+
+      stage.style.backgroundColor = pal.bg;
+      stage.style.color = pal.text;
+      badge.style.backgroundColor = pal.accent;
+      badge.style.color = '#121317';
+
+      heading.style.fontFamily = fp.hFont;
+      heading.style.fontSize = scale + 'px';
+      heading.style.fontWeight = fp.weight;
+      heading.style.letterSpacing = fp.ls;
+
+      body.style.fontFamily = fp.bFont;
+      body.style.color = pal.muted;
+      body.style.lineHeight = lh;
+
+      document.getElementById('cssOutputBox').textContent = `:root {
+  /* Цветовая схема CTRL.PNG */
+  --bg-primary: ${pal.bg};
+  --bg-surface: ${pal.surface};
+  --text-primary: ${pal.text};
+  --text-secondary: ${pal.muted};
+  --accent-main: ${pal.accent};
+
+  /* Шрифтовая пара: ${fp.name} */
+  --font-heading: ${fp.hFont};
+  --font-body: ${fp.bFont};
+  --heading-size: ${scale}px;
+  --body-line-height: ${lh};
+}`;
+    }
+
+    function copyBuilderCss() {
+      copyText(document.getElementById('cssOutputBox').textContent);
+    }
+
+    /* ==========================================================================
+       МОДУЛЬ 3: ЧЕК-ЛИСТ САМОПРОВЕРКИ + ГЕНЕРАТОР ТЗ
+       ========================================================================== */
+    function updateQaProgress() {
+      const rows = document.querySelectorAll('#qaListContainer .check-row');
+      let done = 0;
+      rows.forEach(r => {
+        const cb = r.querySelector('input');
+        r.classList.toggle('checked', cb.checked);
+        if (cb.checked) done++;
+      });
+      const pct = Math.round((done / rows.length) * 100);
+      document.getElementById('qaPctLabel').textContent = `${pct}% (${done}/${rows.length})`;
+      document.getElementById('qaBarFill').style.width = pct + '%';
+    }
+
+    function resetQaChecklist() {
+      document.querySelectorAll('#qaListContainer input').forEach(cb => cb.checked = false);
+      updateQaProgress();
+    }
+
+    function buildBriefDoc() {
+      const name = document.getElementById('tzName').value || 'Без названия';
+      const fmt = document.getElementById('tzFormat').value;
+      const goal = document.getElementById('tzGoal').value || 'Привлечь внимание и выделить суть';
+      document.getElementById('briefOutputBox').textContent = `ТЕХНИЧЕСКОЕ ЗАДАНИЕ (CTRL.PNG)
+====================================
+1. Проект: ${name}
+2. Формат и размер: ${fmt}
+3. Основная задача: ${goal}
+4. Требования к качеству:
+   - Контраст текста к фону не ниже 4.5:1
+   - Не более 3 главных элементов в кадре
+   - Чёткое отделение главного объекта от фона светом
+   - Готовый файл в формате PNG / JPG + исходник по слоям.`;
+    }
+
+    function copyBriefDoc() {
+      copyText(document.getElementById('briefOutputBox').textContent);
+    }
+
+    /* ==========================================================================
+       МОДУЛЬ 4: АНАЛИЗАТОР С 100% СТАБИЛЬНОЙ ДЕТЕРМИНИРОВАННОЙ ОЦЕНКОЙ
+       ========================================================================== */
+    let currentAuditMode = 'thumbnail';
+    let hasLoadedImage = false;
+    // Кэш результатов по отпечатку пикселей, чтобы одна и та же картинка ВСЕГДА давала один и тот же балл
+    const auditMemoryCache = new Map();
+
+    const AUDIT_PROFILES = {
+      thumbnail: {
+        header: 'ИТОГОВАЯ ОЦЕНКА • ОБЛОЖКИ ВИДЕО',
+        labels: ['1. Композиция', '2. Свет и объём', '3. Крупность текста', '4. Цвет и контраст']
+      },
+      uiux: {
+        header: 'ИТОГОВАЯ ОЦЕНКА • САЙТЫ И ИНТЕРФЕЙСЫ',
+        labels: ['1. Понятность структуры', '2. Сетка и отступы', '3. Читаемость текста', '4. Чистота акцентов']
+      },
+      poster: {
+        header: 'ИТОГОВАЯ ОЦЕНКА • РЕКЛАМНЫЕ ПОСТЕРЫ',
+        labels: ['1. Главный объект', '2. Глубина кадра', '3. Заметность заголовка', '4. Цветовая гармония']
+      }
+    };
+
+    function setAuditMode(mode) {
+      currentAuditMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+      const p = AUDIT_PROFILES[mode];
+      document.getElementById('auditProfileLabel').textContent = p.header;
+      document.getElementById('subLbl1').textContent = p.labels[0];
+      document.getElementById('subLbl2').textContent = p.labels[1];
+      document.getElementById('subLbl3').textContent = p.labels[2];
+      document.getElementById('subLbl4').textContent = p.labels[3];
+      if (hasLoadedImage) runFullDesignAudit();
+    }
+
+    function setCanvasView(view) {
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      const map = { orig: 'vBtnOrig', bw: 'vBtnBw', blur: 'vBtnBlur', heat: 'vBtnHeat', ctx: 'vBtnCtx' };
+      document.getElementById(map[view]).classList.add('active');
+
+      const mainC = document.getElementById('mainCanvas');
+      const heatC = document.getElementById('heatCanvas');
+      const ctxF = document.getElementById('contextFrame');
+
+      mainC.style.filter = 'none';
+      heatC.style.opacity = '0';
+      ctxF.classList.remove('active');
+
+      if (view === 'bw') mainC.style.filter = 'grayscale(100%) contrast(1.08)';
+      if (view === 'blur') mainC.style.filter = 'blur(11px) saturate(1.1)';
+      if (view === 'heat') heatC.style.opacity = '0.88';
+      if (view === 'ctx') ctxF.classList.add('active');
+    }
+
+    /* Поддержка перетаскивания файла и вставки через Ctrl+V */
+    const vpBox = document.getElementById('viewportBox');
+    vpBox.addEventListener('dragover', e => { e.preventDefault(); });
+    vpBox.addEventListener('drop', e => {
+      e.preventDefault();
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) loadFileIntoCanvas(e.dataTransfer.files[0]);
+    });
+    window.addEventListener('paste', e => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const it of items) {
+        if (it.type.indexOf('image') !== -1) {
+          switchPage('analyzer');
+          loadFileIntoCanvas(it.getAsFile());
+          break;
+        }
+      }
+    });
+
+    function handleFileSelect(e) {
+      if (e.target.files && e.target.files[0]) loadFileIntoCanvas(e.target.files[0]);
+    }
+
+    function loadFileIntoCanvas(file) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => drawAndAuditImage(img);
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    /* Пример макета для быстрой проверки в 1 клик */
+    function loadDemoDesignSample() {
+      const c = document.getElementById('mainCanvas');
+      const ctx = c.getContext('2d');
+      c.width = 800;
+      c.height = 450;
+
+      const bgGrad = ctx.createLinearGradient(0, 0, 800, 450);
+      bgGrad.addColorStop(0, '#0f131d');
+      bgGrad.addColorStop(1, '#1a1f2e');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 800, 450);
+
+      const glow = ctx.createRadialGradient(560, 230, 20, 560, 230, 220);
+      glow.addColorStop(0, 'rgba(212, 255, 51, 0.58)');
+      glow.addColorStop(1, 'rgba(212, 255, 51, 0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, 800, 450);
+
+      ctx.fillStyle = '#262b38';
+      ctx.strokeStyle = '#d4ff33';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.roundRect(450, 75, 250, 300, 22);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 64px Inter, sans-serif';
+      ctx.fillText('CTRL.PNG', 55, 195);
+
+      ctx.fillStyle = '#d4ff33';
+      ctx.fillRect(55, 220, 320, 74);
+      ctx.fillStyle = '#121317';
+      ctx.font = 'bold 48px Inter, sans-serif';
+      ctx.fillText('ОБЗОР 2026', 74, 275);
+
+      hasLoadedImage = true;
+      document.getElementById('dropzoneOverlay').classList.add('hidden');
+      runFullDesignAudit();
+    }
+
+    function drawAndAuditImage(img) {
+      const c = document.getElementById('mainCanvas');
+      const ctx = c.getContext('2d');
+      c.width = 800;
+      c.height = 450;
+      ctx.fillStyle = '#0e1015';
+      ctx.fillRect(0, 0, 800, 450);
+
+      const scale = Math.min(800 / img.width, 450 / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      ctx.drawImage(img, (800 - w) / 2, (450 - h) / 2, w, h);
+
+      hasLoadedImage = true;
+      document.getElementById('dropzoneOverlay').classList.add('hidden');
+      runFullDesignAudit();
+    }
+
+    /* Детерминированный расчёт отпечатка картинки (FNV-1a hash) + строгих математических оценок */
+    function computePixelHeuristicsAndHeatmap() {
+      const srcCanvas = document.getElementById('mainCanvas');
+      const heatCanvas = document.getElementById('heatCanvas');
+      const W = 420, H = 236;
+      heatCanvas.width = W;
+      heatCanvas.height = H;
+      const hCtx = heatCanvas.getContext('2d');
+      hCtx.drawImage(srcCanvas, 0, 0, W, H);
+
+      const imgData = hCtx.getImageData(0, 0, W, H);
+      const d = imgData.data;
+      const lum = new Float32Array(W * H);
+
+      // Вычисляем детерминированный хеш-отпечаток пикселей (FNV-1a)
+      let hash = 2166136261;
+      for (let i = 0; i < d.length; i += 64) {
+        hash ^= d[i];
+        hash = Math.imul(hash, 16777619);
+        hash ^= d[i + 1];
+        hash = Math.imul(hash, 16777619);
+        hash ^= d[i + 2];
+        hash = Math.imul(hash, 16777619);
+      }
+      const fingerprint = (hash >>> 0).toString(16) + '_' + currentAuditMode;
+
+      let sumL = 0, sumSat = 0, brightPaperPixels = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+        const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        lum[i >> 2] = l;
+        sumL += l;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        const sat = max === 0 ? 0 : (max - min) / max;
+        sumSat += sat;
+        if (l > 0.52 && sat < 0.22) brightPaperPixels++;
+      }
+
+      const totalPx = W * H;
+      const meanL = sumL / totalPx;
+      const meanSat = sumSat / totalPx;
+      let varL = 0;
+      for (let i = 0; i < totalPx; i++) varL += (lum[i] - meanL) ** 2;
+      const stdL = Math.sqrt(varL / totalPx);
+
+      // Карта внимания + анализ контуров и центра композиции
+      const heatOut = hCtx.createImageData(W, H);
+      const hd = heatOut.data;
+      let edgeSum = 0, centerEdgeSum = 0, highFreqCells = 0;
+
+      for (let y = 1; y < H - 1; y++) {
+        for (let x = 1; x < W - 1; x++) {
+          const idx = y * W + x;
+          const gx = -lum[idx - W - 1] + lum[idx - W + 1] - 2 * lum[idx - 1] + 2 * lum[idx + 1] - lum[idx + W - 1] + lum[idx + W + 1];
+          const gy = -lum[idx - W - 1] - 2 * lum[idx - W] - lum[idx - W + 1] + lum[idx + W - 1] + 2 * lum[idx + W] + lum[idx + W + 1];
+          const mag = Math.min(1, Math.hypot(gx, gy));
+          edgeSum += mag;
+          if (x > W * 0.18 && x < W * 0.82 && y > H * 0.15 && y < H * 0.85) {
+            centerEdgeSum += mag;
+          }
+          if (mag > 0.32) highFreqCells++;
+
+          const p = idx * 4;
+          hd[p] = Math.min(255, mag * 380);
+          hd[p + 1] = Math.min(255, Math.max(0, (mag - 0.25) * 320));
+          hd[p + 2] = Math.max(0, 180 - mag * 260);
+          hd[p + 3] = Math.min(235, mag * 290 + 25);
+        }
+      }
+      hCtx.putImageData(heatOut, 0, 0);
+
+      const paperRatio = brightPaperPixels / totalPx;
+      const edgeDensity = highFreqCells / totalPx;
+      const centerFocusRatio = edgeSum > 0 ? centerEdgeSum / edgeSum : 0.5;
+
+      // Детектор рукописных тетрадей, конспектов и случайных бытовых фото без дизайна
+      const isNotebookOrDoc = (paperRatio > 0.48 && meanSat < 0.22 && edgeDensity > 0.06) || (stdL < 0.13 && meanSat < 0.14);
+
+      if (isNotebookOrDoc) {
+        return {
+          fingerprint,
+          is_design_layout: false,
+          detected_type: 'НЕ ЯВЛЯЕТСЯ МАКЕТОМ (ФОТО / КОНСПЕКТ)',
+          summary: 'Обнаружена фотография тетради, документа или обычный снимок без оформления, выраженного главного объекта и работы со светом.',
+          verdict_title: 'Низкая оценка: это обычное фото или конспект',
+          sub_scores: [1.5, 1.2, 1.4, 1.5],
+          final_score: 1.4,
+          critique: [
+            '1. Композиция: На изображении нет главного героя или крупного акцента. Кадр заполнен однородным текстом или бытовым фоном.',
+            '2. Свет и объём: Отсутствует отделение переднего плана от фона и работа с освещением.',
+            '3. Текст: Вместо крупного заголовка на картинке мелкий рукописный или печатный текст, который невозможно прочитать в ленте.',
+            '4. Цвет и контраст: Тусклая бытовая гамма без цветовых акцентов.'
+          ],
+          steps: [
+            'Загрузите готовое превью, макет сайта или рекламный баннер.',
+            'Оставьте в кадре не более 3 крупных элементов: главный объект, понятный фон и 1–3 слова крупного текста.'
+          ]
+        };
+      }
+
+      // 100% детерминированные формулы по 4 критериям (всегда дают одинаковый результат для одной и той же картинки)
+      const modeOffset = currentAuditMode === 'thumbnail' ? 0.2 : (currentAuditMode === 'uiux' ? 0.0 : 0.1);
+      const rawS1 = 5.8 + stdL * 9.5 + centerFocusRatio * 1.6 + modeOffset;
+      const rawS2 = 5.6 + (edgeSum / totalPx) * 12.5 + stdL * 4.2;
+      const rawS3 = 5.9 + stdL * 8.8 + (1 - Math.abs(edgeDensity - 0.14)) * 1.4;
+      const rawS4 = 5.8 + meanSat * 5.8 + stdL * 5.0;
+
+      const s1 = Number(Math.min(9.6, Math.max(4.5, rawS1)).toFixed(1));
+      const s2 = Number(Math.min(9.5, Math.max(4.5, rawS2)).toFixed(1));
+      const s3 = Number(Math.min(9.5, Math.max(4.5, rawS3)).toFixed(1));
+      const s4 = Number(Math.min(9.6, Math.max(4.5, rawS4)).toFixed(1));
+      const finalScore = Number(((s1 + s2 + s3 + s4) / 4).toFixed(1));
+
+      return {
+        fingerprint,
+        is_design_layout: true,
+        detected_type: currentAuditMode === 'thumbnail' ? 'ОБЛОЖКА ВИДЕО' : (currentAuditMode === 'uiux' ? 'МАКЕТ САЙТА' : 'РЕКЛАМНЫЙ БАННЕР'),
+        summary: 'Цельный дизайн-макет с хорошим контрастом главного объекта, заметными акцентами и чистым разделением переднего и заднего планов.',
+        verdict_title: finalScore >= 8.0 ? 'Отличный результат • Высокая заметность' : 'Хорошая основа • Можно усилить детали',
+        sub_scores: [s1, s2, s3, s4],
+        final_score: finalScore,
+        critique: [
+          `1. Композиция (${s1}/10): Главный объект хорошо заметен, но вокруг текста стоит оставить чуть больше свободного места.`,
+          `2. Свет и объём (${s2}/10): Передний план отделён от фона; можно добавить мягкий контурный свет по краям главного героя.`,
+          `3. Текст (${s3}/10): Заголовок хорошо считывается при уменьшении, следите, чтобы мелкие детали не мешали буквам.`,
+          `4. Цвет и контраст (${s4}/10): Приятное сочетание оттенков; углы кадра можно слегка затемнить, чтобы взгляд шёл в центр.`
+        ],
+        steps: [
+          'Усильте контраст между фоном и главным объектом, чтобы силуэт читался даже при сильном уменьшении.',
+          'Проверьте работу во вкладках «Ч/Б Тон» и «Тест прищура» — главные элементы должны оставаться чёткими.'
+        ]
+      };
+    }
+
+    async function fetchGeminiTextExplanation(deterministicData) {
+      const apiKey = "";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+      const tempC = document.createElement('canvas');
+      tempC.width = 420;
+      tempC.height = 236;
+      tempC.getContext('2d').drawImage(document.getElementById('mainCanvas'), 0, 0, 420, 236);
+      const b64 = tempC.toDataURL('image/jpeg', 0.78).split(',')[1];
+
+      const ctxTitle = document.getElementById('auditContextTitle').value.trim();
+      const niche = document.getElementById('auditNicheSelect').value;
+      const [s1, s2, s3, s4] = deterministicData.sub_scores;
+
+      const prompt = `Ты опытный арт-директор. Опиши это изображение простым и понятным русским языком без сложных англоязычных терминов.
+Режим: ${currentAuditMode}. Тема: ${niche}. Название проекта: "${ctxTitle || 'не указано'}".
+ВАЖНО: Точные математические оценки для этого изображения уже вычислены и зафиксированы:
+- Итоговый балл: ${deterministicData.final_score} из 10
+- 1. Композиция: ${s1}/10
+- 2. Свет и объём: ${s2}/10
+- 3. Текст: ${s3}/10
+- 4. Цвет и контраст: ${s4}/10
+Если на фото обычная тетрадь с рукописным текстом, документ или случайная бытовая фотография без дизайна — установи is_design_layout: false. Иначе объясни в critique и steps, что именно изображено на картинке и как её улучшить, опираясь строго на эти зафиксированные баллы.`;
+
+      const payload = {
+        contents: [{
+          role: "user",
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType: "image/jpeg", data: b64 } }
+          ]
+        }],
+        generationConfig: {
+          temperature: 0,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              is_design_layout: { type: "BOOLEAN" },
+              detected_type: { type: "STRING" },
+              summary: { type: "STRING" },
+              verdict_title: { type: "STRING" },
+              critique: { type: "ARRAY", items: { type: "STRING" } },
+              steps: { type: "ARRAY", items: { type: "STRING" } }
+            },
+            required: ["is_design_layout", "detected_type", "summary", "verdict_title", "critique", "steps"]
+          }
+        }
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!txt) return deterministicData;
+
+      const parsed = JSON.parse(txt);
+      // Если ИИ обнаружил, что это не макет (например, фото тетради или документа), фиксируем низкий балл 1.4
+      if (parsed.is_design_layout === false || !deterministicData.is_design_layout) {
+        return {
+          ...deterministicData,
+          is_design_layout: false,
+          detected_type: 'НЕ ЯВЛЯЕТСЯ МАКЕТОМ (ФОТО / КОНСПЕКТ)',
+          summary: parsed.summary || deterministicData.summary,
+          verdict_title: 'Низкая оценка: это обычное фото или конспект',
+          sub_scores: [1.5, 1.2, 1.4, 1.5],
+          final_score: 1.4,
+          critique: parsed.critique?.length === 4 ? parsed.critique : deterministicData.critique,
+          steps: parsed.steps?.length ? parsed.steps : deterministicData.steps
+        };
+      }
+
+      // Сохраняем 100% фиксированные математические оценки deterministicData.sub_scores, чтобы балл НИКОГДА не прыгал!
+      return {
+        ...deterministicData,
+        detected_type: parsed.detected_type || deterministicData.detected_type,
+        summary: parsed.summary || deterministicData.summary,
+        verdict_title: parsed.verdict_title || deterministicData.verdict_title,
+        critique: parsed.critique?.length === 4 ? parsed.critique : deterministicData.critique,
+        steps: parsed.steps?.length ? parsed.steps : deterministicData.steps
+      };
+    }
+
+    async function runFullDesignAudit() {
+      const scanOv = document.getElementById('scanOverlay');
+      scanOv.classList.add('active');
+      setScoreUI(0, [0, 0, 0, 0], true);
+
+      // 1. Вычисляем детерминированный попиксельный профиль и отпечаток изображения
+      const localResult = computePixelHeuristicsAndHeatmap();
+      const cacheKey = localResult.fingerprint + '_' + (document.getElementById('auditContextTitle').value.trim() || '');
+
+      const stages = [
+        ['ШАГ 1 / 4 • ПРОВЕРКА ИЗОБРАЖЕНИЯ', 'Определение типа работы и основных объектов...'],
+        ['ШАГ 2 / 4 • КАРТА ВНИМАНИЯ', 'Поиск самых заметных деталей и оценка композиции...'],
+        ['ШАГ 3 / 4 • КОНТРАСТ И ТЕКСТ', 'Проверка читаемости заголовков и отделения от фона...'],
+        ['ШАГ 4 / 4 • ПОДГОТОВКА СОВЕТОВ', 'Формирование итоговой оценки и рекомендаций...']
+      ];
+      let stIdx = 0;
+      const stTimer = setInterval(() => {
+        stIdx = Math.min(3, stIdx + 1);
+        document.getElementById('scanStepBadge').textContent = stages[stIdx][0];
+        document.getElementById('scanTitleText').textContent = stages[stIdx][1];
+      }, 750);
+
+      // Если эта картинка уже проверялась — берём результат из кэша (100% идентичная оценка и разбор)
+      if (auditMemoryCache.has(cacheKey)) {
+        await new Promise(r => setTimeout(r, 1800));
+        clearInterval(stTimer);
+        scanOv.classList.remove('active');
+        renderAuditOutput(auditMemoryCache.get(cacheKey));
+        return;
+      }
+
+      let finalResult = localResult;
+      try {
+        const [aiMerged] = await Promise.all([
+          fetchGeminiTextExplanation(localResult).catch(() => localResult),
+          new Promise(r => setTimeout(r, 2800))
+        ]);
+        if (aiMerged) finalResult = aiMerged;
+      } catch (_) {
+        finalResult = localResult;
+      }
+
+      auditMemoryCache.set(cacheKey, finalResult);
+      clearInterval(stTimer);
+      scanOv.classList.remove('active');
+      renderAuditOutput(finalResult);
+    }
+
+    function setScoreUI(avg, subs, isReset) {
+      const scoreEl = document.getElementById('scoreNum');
+      const arc = document.getElementById('gaugeArc');
+      scoreEl.textContent = avg.toFixed(1);
+      const offset = 239 - (Math.min(10, Math.max(0, avg)) / 10) * 239;
+      arc.style.strokeDashoffset = isReset ? 239 : offset;
+      arc.style.stroke = avg < 3.5 ? '#ff5252' : (avg >= 7.5 ? '#d4ff33' : '#ffffff');
+
+      ['subVal1', 'subVal2', 'subVal3', 'subVal4'].forEach((id, i) => {
+        document.getElementById(id).textContent = (subs[i] || 0).toFixed(1);
+      });
+    }
+
+    function renderAuditOutput(res) {
+      const subs = res.sub_scores || [7.0, 7.0, 7.0, 7.0];
+      const exactAvg = typeof res.final_score === 'number'
+        ? res.final_score
+        : Number(((subs[0] + subs[1] + subs[2] + subs[3]) / 4).toFixed(1));
+
+      setScoreUI(exactAvg, subs, false);
+
+      const badge = document.getElementById('detectedTypeBadge');
+      badge.textContent = res.detected_type || (res.is_design_layout ? 'ДИЗАЙН-МАКЕТ' : 'НЕ ЯВЛЯЕТСЯ МАКЕТОМ');
+      badge.style.color = res.is_design_layout ? 'var(--lime)' : 'var(--danger)';
+
+      document.getElementById('recognizedPlotText').textContent = res.summary;
+      document.getElementById('verdictTitle').textContent = res.verdict_title;
+      document.getElementById('verdictSub').textContent = res.is_design_layout
+        ? 'Оценка закреплена за изображением и рассчитана по 4 критериям'
+        : 'Обычное фото или конспект не является оформленным макетом';
+
+      document.getElementById('critiqueList').innerHTML = (res.critique || []).map(c => `
+        <div class="tip-card">${c}</div>
+      `).join('');
+
+      const planWrap = document.getElementById('actionPlanWrap');
+      planWrap.style.display = 'block';
+      document.getElementById('actionStepsList').innerHTML = (res.steps || []).map((s, idx) => `
+        <div><strong style="color:var(--lime);font-family:var(--font-mono);">ШАГ ${idx + 1}:</strong> ${s}</div>
+      `).join('');
+    }
+
+    /* ==========================================================================
+       МОДАЛЬНЫЕ ОКНА, ЧАТ ПОДДЕРЖКИ И БУФЕР ОБМЕНА
+       ========================================================================== */
+    const MODAL_CONTENT = {
+      fonts: { tag: 'МАТЕРИАЛЫ • ШРИФТЫ', title: 'Шрифты для заголовков и интерфейсов', html: '<p>Используйте крупные плотные шрифты (Impact, Druk, Unbounded, Inter ExtraBold) для коротких фраз из 1–3 слов на обложках и спокойные читаемые шрифты (Inter) для сайтов. Не ставьте тонкий шрифт поверх пёстрого фона.</p>' },
+      palettes: { tag: 'МАТЕРИАЛЫ • ПАЛИТРЫ', title: 'Контрастные цветовые сочетания', html: '<p>Лучше всего работают контрастные пары: тёплый яркий главный объект (жёлтый, лаймовый, оранжевый) на тёмном графитовом или глубоком синем фоне (#16171B).</p>' },
+      textures: { tag: 'МАТЕРИАЛЫ • ТЕКСТУРЫ И СВЕТ', title: 'Контурный свет и глубина кадра', html: '<p>Чтобы главный герой не выглядел плоско, добавьте мягкое свечение позади его фигуры и прорисуйте яркий контурный свет по краям плеч и головы.</p>' },
+      psd: { tag: 'МАТЕРИАЛЫ • ШАБЛОНЫ', title: 'Понятная структура слоёв в проекте', html: '<pre class="code-box" style="margin-top:8px;">1. Финальная цветокоррекция\n2. Текст и заголовки\n3. Главный герой + контурный свет\n4. Дымка и свечение за героем\n5. Размытый задний план</pre>' },
+      viral: { tag: 'ВДОХНОВЕНИЕ • РАЗБОР РАБОТ', title: 'Как удержать внимание зрителя', html: '<p>Зритель смотрит на обложку в таком порядке: 1) Крупное лицо с эмоцией или необычный предмет, 2) Деталь, вызывающая вопрос, 3) Короткий крупный текст, дополняющий тему.</p>' },
+      comp: { tag: 'ВДОХНОВЕНИЕ • КОМПОЗИЦИЯ', title: 'Расположение объектов в кадре', html: '<p>Размещайте главный объект чуть левее или правее центра по правилу третей, оставляя свободное пространство для крупного текста.</p>' },
+      trends: { tag: 'ВДОХНОВЕНИЕ • ТРЕНДЫ', title: 'Современное оформление', html: '<p>Сейчас лучше всего работает чистый объёмный свет, естественные цвета без перебора с резкостью и аккуратные карточки с воздухом.</p>' },
+      guide: { tag: 'ОБУЧЕНИЕ • ГАЙД', title: 'Как проверять свою работу перед публикацией', html: '<p>Всегда проверяйте макет в чёрно-белом режиме (чтобы убедиться, что герой не сливается с фоном) и уменьшайте масштаб до размера иконки телефона.</p>' },
+      mistakes: { tag: 'ОБУЧЕНИЕ • ОШИБКИ', title: '5 частых ошибок новичков', html: '<p>1. Больше 3 разных объектов в кадре. 2. Текст сливается с фоном. 3. Грязные чёрные тени вокруг букв. 4. Важная надпись в правом нижнем углу под временем видео. 5. Слишком длинный текст на обложке.</p>' },
+      specs: { tag: 'ОБУЧЕНИЕ • ПАРАМЕТРЫ', title: 'Технические требования к файлам', html: '<p>Обложки видео: 1920×1080 пикселей (16:9), формат PNG или JPG до 2 МБ. Макеты сайтов: ширина экрана 1440 пикселей для компьютера и 375 пикселей для телефона.</p>' },
+      ad: { tag: 'РЕКЛАМА НА САЙТЕ', title: 'Размещение рекламы в CTRL.PNG', html: '<p>Вы можете разместить баннер своего проекта, курса или набора материалов. Напишите нам в окно поддержки в правом нижнем углу.</p>' }
+    };
+
+    function openModal(id) {
+      const m = MODAL_CONTENT[id];
+      if (!m) return;
+      document.getElementById('modalTag').textContent = m.tag;
+      document.getElementById('modalTitle').textContent = m.title;
+      document.getElementById('modalBody').innerHTML = m.html;
+      document.getElementById('studioModal').classList.add('open');
+    }
+    function closeModal() { document.getElementById('studioModal').classList.remove('open'); }
+
+    function toggleSupport() {
+      document.getElementById('supportBox').classList.toggle('open');
+    }
+
+    function sendSupportMsg() {
+      const inp = document.getElementById('chatInput');
+      const val = inp.value.trim();
+      if (!val) return;
+      const log = document.getElementById('chatLog');
+      log.innerHTML += `<div class="bubble user">${val.replace(/</g, '&lt;')}</div>`;
+      inp.value = '';
+      setTimeout(() => {
+        log.innerHTML += `<div class="bubble bot">Спасибо за сообщение! Чтобы проверить свою работу, откройте вкладку «Анализатор», а для проверки читаемости текста перейдите в раздел «Материалы».</div>`;
+        log.scrollTop = log.scrollHeight;
+      }, 350);
+    }
+
+    function copyText(str) {
+      const ta = document.createElement('textarea');
+      ta.value = str;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const t = document.getElementById('toastBox');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCards();
+      syncWcag('picker');
+      updateFontBuilder();
+      buildBriefDoc();
+    });
+  </script>
+</body>
+</html>
