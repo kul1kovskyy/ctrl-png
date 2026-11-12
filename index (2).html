@@ -1,0 +1,2752 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CTRL.PNG — Платформа и инструменты для дизайнеров</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316171b'/%3E%3Cpath d='M43 20a16 16 0 1 0 0 24' fill='none' stroke='%23d4ff33' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    /* ==========================================================================
+       1. ДИЗАЙН-ТОКЕНЫ (ГРАФИТОВО-ТИТАНОВАЯ ПАЛИТРА)
+       ========================================================================== */
+    :root {
+      --bg-base: #16171b;
+      --bg-card: #1d1f26;
+      --bg-hover: #242730;
+      --bg-elevated: #22252e;
+      --border: #2f3441;
+      --border-subtle: #252833;
+      --text-main: #f3f4f6;
+      --text-sec: #9ca3af;
+      --text-muted: #6b7280;
+      --lime: #d4ff33;
+      --lime-soft: rgba(212, 255, 51, 0.12);
+      --danger: #ff5252;
+      --warning: #f59e0b;
+      --success: #10b981;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+      --radius-xl: 22px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-pill: 9999px;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      min-height: 100vh;
+      background-color: var(--bg-base);
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    button, input, select, textarea {
+      font-family: inherit;
+      color: inherit;
+      background: none;
+      border: none;
+      outline: none;
+    }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+
+    /* Фоновые сетки (Чертёж по умолчанию) */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    body.grid-blueprint .bg-grid {
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(to right, rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+    }
+    body.grid-png .bg-grid {
+      background-image:
+        linear-gradient(45deg, #1b1d23 25%, transparent 25%),
+        linear-gradient(-45deg, #1b1d23 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1b1d23 75%),
+        linear-gradient(-45deg, transparent 75%, #1b1d23 75%);
+      background-size: 32px 32px;
+      background-position: 0 0, 0 16px, 16px -16px, -16px 0;
+    }
+    body.grid-clean .bg-grid {
+      background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.04), transparent 65%);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ==========================================================================
+       2. КАПСУЛЬНАЯ ШАПКА И ВЕКТОРНЫЙ ЛОГОТИП CTRL (БЕЗ .PNG)
+       ========================================================================== */
+    .header-wrap {
+      position: fixed;
+      top: 16px;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      padding: 0 16px;
+      pointer-events: none;
+    }
+    .capsule-nav {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px 8px 18px;
+      background: rgba(24, 26, 32, 0.88);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      box-shadow: 0 16px 38px rgba(0,0,0,0.45);
+    }
+    .brand-logo {
+      display: inline-flex;
+      align-items: center;
+      padding-right: 8px;
+      cursor: pointer;
+    }
+    .brand-logo svg { height: 28px; width: auto; display: block; }
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+    .nav-btn {
+      padding: 8px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-sec);
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .nav-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+    .nav-btn.active {
+      background: #ffffff;
+      color: #121317;
+      font-weight: 600;
+      box-shadow: 0 2px 14px rgba(255,255,255,0.2);
+    }
+    .badge-ai {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: var(--lime-soft);
+      color: var(--lime);
+      border: 1px solid rgba(212,255,51,0.35);
+    }
+    .nav-btn.active .badge-ai { background: #16171b; color: var(--lime); }
+    .grid-btn {
+      padding: 7px 12px;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-mono);
+      font-size: 0.73rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      transition: all 0.2s ease;
+    }
+    .grid-btn:hover {
+      border-color: rgba(255,255,255,0.45);
+      box-shadow: 0 0 16px rgba(255,255,255,0.14);
+    }
+
+    /* ==========================================================================
+       3. СТРАНИЦЫ SPA, КНОПКИ И BENTO-КАРТОЧКИ (БЕЗ 4 В РЯД)
+       ========================================================================== */
+    .spa-page {
+      display: none;
+      padding: 116px 0 90px;
+      flex: 1;
+      animation: fadeIn 0.28s var(--ease);
+    }
+    .spa-page.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-block { margin-top: 112px; }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+    }
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pill-tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-sec);
+    }
+
+    /* Кнопки с нейтральным серебристо-белым свечением */
+    .btn-white {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px 24px;
+      border-radius: var(--radius-pill);
+      background: #ffffff;
+      color: #121317;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s var(--ease);
+    }
+    .btn-white:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(255, 255, 255, 0.18);
+    }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px 22px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-card);
+      color: var(--text-main);
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      transition: all 0.2s var(--ease);
+    }
+    .btn-ghost:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,0.45);
+      box-shadow: 0 10px 24px rgba(255, 255, 255, 0.14);
+      background: var(--bg-hover);
+    }
+
+    /* Главный экран */
+    .hero-box {
+      text-align: center;
+      max-width: 920px;
+      margin: 18px auto 0;
+    }
+    .hero-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 6px 15px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--text-sec);
+      margin-bottom: 22px;
+    }
+    .dot-lime {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--lime);
+      box-shadow: 0 0 10px var(--lime);
+    }
+    .hero-title {
+      font-size: clamp(2rem, 4.4vw, 3.6rem);
+      font-weight: 600;
+      line-height: 1.13;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .hero-highlight {
+      display: inline-block;
+      background: #ffffff;
+      color: #121317;
+      padding: 2px 16px 4px;
+      border-radius: 10px;
+      box-shadow: 5px 5px 0 rgba(255,255,255,0.22);
+    }
+    .hero-sub {
+      max-width: 660px;
+      margin: 0 auto 28px;
+      color: var(--text-sec);
+      font-size: 1.02rem;
+    }
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+
+    /* Блок-заглушка для видео с размытым серым фоном на главном экране */
+    .video-placeholder-frame {
+      width: 100%;
+      min-height: 340px;
+      border-radius: var(--radius-xl);
+      background: rgba(120, 126, 142, 0.14);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .video-placeholder-frame::before {
+      content: '';
+      position: absolute;
+      width: 360px;
+      height: 190px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.09);
+      filter: blur(48px);
+      pointer-events: none;
+    }
+    .video-placeholder-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 28px 42px;
+      border-radius: var(--radius-lg);
+      background: rgba(42, 46, 56, 0.55);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .video-play-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+    }
+    .video-placeholder-text {
+      font-size: 0.98rem;
+      font-weight: 500;
+      color: #d1d5db;
+      text-align: center;
+    }
+
+    /* Просторная сетка 2 колонки */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 34px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 24px;
+      cursor: pointer;
+      transition: all 0.24s var(--ease);
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      background: var(--bg-hover);
+      border-color: rgba(255,255,255,0.45);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.45), 0 0 22px rgba(255,255,255,0.08);
+    }
+    .card.wide {
+      grid-column: span 2;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      align-items: center;
+      gap: 32px;
+    }
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      transition: all 0.22s var(--ease);
+      flex-shrink: 0;
+    }
+    .icon-box svg { width: 24px; height: 24px; stroke-width: 1.5; }
+    .card:hover .icon-box {
+      background: #ffffff;
+      color: #121317;
+      border-color: #ffffff;
+      box-shadow: 0 6px 18px rgba(255,255,255,0.2);
+    }
+    .card h3 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .card p { color: var(--text-sec); font-size: 0.92rem; }
+    .diagram-box {
+      background: #14161b;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-sec);
+    }
+
+    /* Рекламный слот */
+    .ad-banner {
+      margin-top: 84px;
+      padding: 26px 32px;
+      border-radius: var(--radius-xl);
+      background: rgba(30, 33, 42, 0.55);
+      border: 1px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    /* ==========================================================================
+       4. СТИЛИ 4 МОДУЛЕЙ MVP (WCAG, ШРИФТЫ/CSS, ЧЕК-ЛИСТ/ТЗ, AI-АУДИТОР)
+       ========================================================================== */
+    .mvp-block {
+      margin-top: 84px;
+      padding-top: 56px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .mvp-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .field-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-sec);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .picker-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .picker-wrap input[type="color"] {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .picker-wrap input[type="text"] {
+      width: 100%;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .wcag-badges {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .wcag-item {
+      padding: 11px 14px;
+      border-radius: 11px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+    }
+    .status-pill {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+    }
+    .status-pill.pass {
+      background: rgba(16,185,129,0.16);
+      color: #34d399;
+      border: 1px solid rgba(16,185,129,0.4);
+    }
+    .status-pill.fail {
+      background: rgba(239,68,68,0.16);
+      color: #f87171;
+      border: 1px solid rgba(239,68,68,0.4);
+    }
+    .studio-select, .studio-input {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: #ffffff;
+      padding: 11px 14px;
+      border-radius: 11px;
+      font-size: 0.86rem;
+    }
+    .studio-select option { background: #1d1f26; color: #ffffff; }
+    .code-box {
+      background: #121317;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: #d1d5db;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 11px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      font-size: 0.86rem;
+    }
+    .check-row.checked {
+      border-color: rgba(212,255,51,0.5);
+      background: rgba(212,255,51,0.06);
+    }
+    .check-row input { accent-color: var(--lime); width: 16px; height: 16px; margin-top: 3px; }
+
+    /* Анализатор макетов */
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: var(--bg-card);
+      padding: 6px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .mode-btn {
+      padding: 11px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-sec);
+      transition: all 0.18s ease;
+    }
+    .mode-btn.active {
+      background: #ffffff;
+      color: #121317;
+      font-weight: 600;
+    }
+    .context-bar {
+      display: grid;
+      grid-template-columns: 1fr 240px auto;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .view-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .view-btn {
+      padding: 7px 13px;
+      border-radius: 9px;
+      font-size: 0.78rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-sec);
+    }
+    .view-btn.active {
+      background: #ffffff;
+      color: #121317;
+      font-weight: 600;
+    }
+    .viewport-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #111216;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #mainCanvas, #heatCanvas, #overlayCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: filter 0.22s ease, opacity 0.22s ease;
+    }
+    #heatCanvas, #overlayCanvas { pointer-events: none; }
+    #heatCanvas { opacity: 0; }
+    #overlayCanvas { z-index: 3; }
+    .analysis-switch-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .analysis-switch-bar .field-label { margin: 0 auto 0 0; }
+    .overlay-btn[aria-pressed="true"] {
+      color: var(--lime);
+      border-color: rgba(212,255,51,0.45);
+      background: var(--lime-soft);
+    }
+    .engine-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 15px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      background: var(--bg-elevated);
+    }
+    .engine-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .engine-state::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .engine-state.loading::before { background: var(--warning); box-shadow: 0 0 10px rgba(245,158,11,0.55); }
+    .engine-state.ready::before { background: var(--lime); box-shadow: 0 0 10px rgba(212,255,51,0.55); }
+    .engine-state.fallback::before { background: var(--warning); }
+    .engine-note { color: var(--text-muted); font-size: 0.72rem; text-align: right; }
+    .diagnostic-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .diagnostic-cell {
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      background: rgba(255,255,255,0.018);
+    }
+    .diagnostic-cell span { display: block; color: var(--text-muted); font-size: 0.68rem; margin-bottom: 3px; }
+    .diagnostic-cell strong { font-family: var(--font-mono); font-size: 0.78rem; font-weight: 500; }
+    .palette-strip {
+      display: flex;
+      height: 12px;
+      overflow: hidden;
+      border-radius: 5px;
+      margin-top: 14px;
+      background: var(--bg-base);
+    }
+    .palette-strip span { min-width: 4px; }
+    .detection-list {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .detection-chip {
+      padding: 4px 8px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      color: var(--text-sec);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+    }
+    .detection-chip.face { color: var(--lime); border-color: rgba(212,255,51,0.35); }
+    .audit-error { color: #f87171 !important; }
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [onclick]:focus-visible {
+      outline: 2px solid var(--lime);
+      outline-offset: 3px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+    }
+    .dropzone {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      background: rgba(19, 21, 26, 0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      cursor: pointer;
+    }
+    .dropzone.hidden { opacity: 0; pointer-events: none; }
+    .scan-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background: rgba(15, 17, 22, 0.86);
+      backdrop-filter: blur(6px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .scan-overlay.active { opacity: 1; pointer-events: auto; }
+    .laser-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--lime), #fff, var(--lime), transparent);
+      box-shadow: 0 0 16px var(--lime);
+      animation: laserMove 2s ease-in-out infinite;
+    }
+    @keyframes laserMove {
+      0% { top: 8%; }
+      50% { top: 90%; }
+      100% { top: 8%; }
+    }
+    .context-frame {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      border: 12px solid #0d0e11;
+      display: none;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 40%);
+    }
+    .context-frame.active { display: flex; }
+
+    .score-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 18px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .gauge-wrap { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
+    .gauge-svg { width: 88px; height: 88px; transform: rotate(-90deg); }
+    .gauge-bg { fill: none; stroke: var(--bg-elevated); stroke-width: 7; }
+    .gauge-fill {
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-dasharray: 239;
+      stroke-dashoffset: 239;
+      transition: stroke-dashoffset 0.7s var(--ease), stroke 0.3s ease;
+    }
+    .gauge-num {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+    .sub-scores {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .sub-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 10px 13px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+    }
+    .tip-card {
+      padding: 13px 15px;
+      border-radius: 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.84rem;
+      margin-bottom: 10px;
+    }
+
+    /* Модальное окно и чат поддержки */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(10, 11, 15, 0.82);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-card {
+      width: 100%;
+      max-width: 680px;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+    }
+    .support-fab {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 1500;
+      padding: 12px 18px;
+      border-radius: var(--radius-pill);
+      background: #ffffff;
+      color: #121317;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+    }
+    .support-box {
+      position: fixed;
+      right: 24px;
+      bottom: 78px;
+      width: 350px;
+      max-width: calc(100vw - 32px);
+      z-index: 1550;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 24px 50px rgba(0,0,0,0.6);
+    }
+    .support-box.open { display: flex; }
+    .chat-log {
+      height: 240px;
+      overflow-y: auto;
+      padding: 16px;
+      background: #14161b;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .bubble {
+      padding: 10px 13px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      max-width: 86%;
+    }
+    .bubble.bot { background: var(--bg-elevated); align-self: flex-start; }
+    .bubble.user { background: #ffffff; color: #121317; font-weight: 500; align-self: flex-end; }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 3000;
+      background: #ffffff;
+      color: #121317;
+      padding: 10px 20px;
+      border-radius: var(--radius-pill);
+      font-size: 0.83rem;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.22s var(--ease);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 32px 0;
+      margin-top: auto;
+      position: relative;
+      z-index: 2;
+      background: rgba(18, 19, 23, 0.9);
+    }
+
+    @media (max-width: 920px) {
+      .grid-2, .workspace-grid, .context-bar, .mode-tabs { grid-template-columns: 1fr; }
+      .card.wide { grid-column: span 1; grid-template-columns: 1fr; }
+      .player-stage { border-right: none; border-bottom: 1px solid var(--border-subtle); }
+      .header-wrap { top: 8px; padding: 0 12px; }
+      .capsule-nav {
+        width: min(100%, 560px);
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 6px;
+        padding: 8px 10px;
+        border-radius: 20px;
+      }
+      .brand-logo { grid-column: 1; grid-row: 1; justify-self: start; }
+      .grid-btn { grid-column: 2; grid-row: 1; min-height: 40px; }
+      .nav-links {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: 100%;
+      }
+      .nav-btn { justify-content: center; padding: 8px 5px; font-size: 0.74rem; min-height: 38px; }
+      .nav-btn .badge-ai { display: none; }
+      .spa-page { padding-top: 172px; }
+    }
+    @media (max-width: 600px) {
+      .container { padding: 0 16px; }
+      .spa-page { padding-bottom: 64px; }
+      .mvp-panel { padding: 20px; }
+      .grid-2 { gap: 16px; }
+      .card { padding: 24px; }
+      .section-block, .mvp-block { margin-top: 64px; }
+      .section-title { font-size: 1.25rem; }
+      .section-head { align-items: flex-start; }
+      .view-btn, .mode-btn { min-height: 44px; }
+      .analysis-switch-bar .field-label { width: 100%; }
+      .engine-line { align-items: flex-start; flex-direction: column; }
+      .engine-note { text-align: left; }
+      .score-head { align-items: flex-start; }
+      .support-fab { right: 16px; bottom: 16px; }
+      .video-placeholder-inner { padding: 24px 18px; }
+    }
+  </style>
+</head>
+<body class="grid-blueprint">
+
+  <div class="bg-grid"></div>
+
+  <!-- ==========================================================================
+       ПЛАВАЮЩАЯ ШАПКА С КАСТОМНЫМ ВЕКТОРНЫМ ЛОГОТИПОМ CTRL (БЕЗ .PNG)
+       ========================================================================== -->
+  <header class="header-wrap">
+    <nav class="capsule-nav">
+      <div class="brand-logo" role="button" tabindex="0" onclick="switchPage('home')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchPage('home')}" title="CTRL.PNG — На главную">
+        <svg viewBox="0 0 116 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <line x1="7" y1="13" x2="39" y2="5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="7" cy="13" r="4" fill="#ffffff"/>
+          <circle cx="39" cy="5" r="4" fill="#ffffff"/>
+          <rect x="20" y="5.5" width="6.5" height="6.5" transform="rotate(-14 20 5.5)" fill="#ffffff"/>
+          <path d="M12 32C8.5 26 10 16 19 11" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="12" cy="32" r="4" fill="#ffffff"/>
+          <path d="M38 27.5C35.2 31.2 31 33 26.2 33C18.2 33 13.5 28 13.5 21.5C13.5 15 18.2 10 26.2 10C31.2 10 35.2 11.8 37.8 15L31.8 18.8C30.4 16.8 28.5 15.8 26.2 15.8C22.4 15.8 20.2 18.1 20.2 21.5C20.2 24.9 22.4 27.2 26.2 27.2C28.6 27.2 30.6 26.1 32 24L38 27.5Z" fill="#ffffff"/>
+          <path d="M48 6H56V13H62V19H56V25L48 32V19H44V13H48V6Z" fill="#ffffff"/>
+          <polygon points="56,24 62,33 50,33" fill="#ffffff"/>
+          <path d="M68 13H75.5V16.8C77.2 14 80 12.6 83.5 12.6H85V19.5H82.5C78.2 19.5 76 21.5 76 25.8V33H68V13Z" fill="#ffffff"/>
+          <rect x="90" y="5" width="8" height="28" fill="#ffffff"/>
+        </svg>
+      </div>
+
+      <div class="nav-links">
+        <button class="nav-btn active" data-page="home" onclick="switchPage('home')">Главная</button>
+        <button class="nav-btn" data-page="materials" onclick="switchPage('materials')">Материалы</button>
+        <button class="nav-btn" data-page="inspiration" onclick="switchPage('inspiration')">Вдохновение</button>
+        <button class="nav-btn" data-page="education" onclick="switchPage('education')">Обучение</button>
+        <button class="nav-btn" data-page="analyzer" onclick="switchPage('analyzer')">
+          Анализатор <span class="badge-ai">ИИ</span>
+        </button>
+      </div>
+
+      <button class="grid-btn" id="gridToggleBtn" onclick="cycleGridMode()">Фон: Чертёж</button>
+    </nav>
+  </header>
+
+  <!-- ==========================================================================
+       СТРАНИЦА 1: ГЛАВНАЯ
+       ========================================================================== -->
+  <main id="page-home" class="spa-page active">
+    <div class="container">
+      <section class="hero-box">
+        <div class="hero-status">
+          <span class="dot-lime"></span>
+          <span>Единое рабочее пространство, база материалов и проверка макетов</span>
+        </div>
+        <h1 class="hero-title">
+          ВСЁ ДЛЯ ДИЗАЙНЕРА ПРЕВЬЮ И ИНТЕРФЕЙСОВ В <span class="hero-highlight">ОДНОМ МЕСТЕ</span>
+        </h1>
+        <p class="hero-sub">
+          Все нужные инструменты в одном окне: проверка читаемости текста, подбор шрифтов и цветов, сборка технического задания и умный анализатор работ.
+        </p>
+        <div class="hero-actions">
+          <button class="btn-white" onclick="switchPage('analyzer')">Открыть анализатор</button>
+          <button class="btn-ghost" onclick="switchPage('materials')">Перейти к материалам</button>
+        </div>
+
+        <!-- Заглушка под видео с размытым серым фоном -->
+        <div class="video-placeholder-frame">
+          <div class="video-placeholder-inner">
+            <div class="video-play-circle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="6,4 20,12 6,20"></polygon>
+              </svg>
+            </div>
+            <div class="video-placeholder-text">(тут должно было быть видео как сайт устроен)</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Витрина разделов на Главной -->
+      <section class="section-block">
+        <div class="section-head">
+          <div class="section-title">Материалы и шаблоны <span class="pill-tag">4 РАЗДЕЛА</span></div>
+          <button class="btn-ghost" style="padding:8px 16px;font-size:0.82rem;" onclick="switchPage('materials')">Все инструменты →</button>
+        </div>
+        <div class="grid-2" id="homeMaterialsGrid"></div>
+      </section>
+
+      <!-- Рекламный блок -->
+      <div class="ad-banner">
+        <div>
+          <span class="pill-tag" style="color:var(--lime);border-color:rgba(212,255,51,0.35);">РЕКЛАМНОЕ МЕСТО • ЗДЕСЬ МОЖЕТ БЫТЬ ВАША РЕКЛАМА</span>
+          <h3 style="font-size:1.2rem;margin-top:8px;">Расскажите о своём наборе материалов, курсе или студии аудитории сайта</h3>
+          <p style="color:var(--text-sec);font-size:0.88rem;margin-top:4px;">Размещение баннера на главной странице и в разделе материалов.</p>
+        </div>
+        <button class="btn-ghost" onclick="openModal('ad')">Условия размещения</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       СТРАНИЦА 2: МАТЕРИАЛЫ + ПРОВЕРКА КОНТРАСТА + ПОДБОР ШРИФТОВ И ЦВЕТОВ
+       ========================================================================== -->
+  <main id="page-materials" class="spa-page">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-title">База материалов <span class="pill-tag">ДЛЯ РАБОТЫ</span></div>
+        <button class="btn-white" style="padding:9px 18px;font-size:0.82rem;" onclick="document.getElementById('module-wcag').scrollIntoView({behavior:'smooth'})">К калькулятору контраста ↓</button>
+      </div>
+      <div class="grid-2" id="fullMaterialsGrid"></div>
+
+      <!-- МОДУЛЬ 1: КАЛЬКУЛЯТОР КОНТРАСТА -->
+      <section id="module-wcag" class="mvp-block">
+        <div class="section-head">
+          <div class="section-title">Калькулятор контраста текста и фона <span class="pill-tag">ПРОВЕРКА ЧИТАЕМОСТИ</span></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="pill-tag" onclick="setWcagPreset('#FFFFFF','#16171B')">Белый на тёмном (17.4:1)</button>
+            <button class="pill-tag" onclick="setWcagPreset('#121317','#D4FF33')">Тёмный на ярком (15.1:1)</button>
+            <button class="pill-tag" onclick="setWcagPreset('#7A808C','#1D1F26')">Средний контраст (4.6:1)</button>
+            <button class="pill-tag" onclick="setWcagPreset('#525663','#1D1F26')">Слабый контраст (2.3:1)</button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="mvp-panel">
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end;">
+              <div>
+                <span class="field-label">ЦВЕТ ТЕКСТА</span>
+                <div class="picker-wrap">
+                  <input type="color" id="wcagFgColor" value="#ffffff" oninput="syncWcag('picker')">
+                  <input type="text" id="wcagFgHex" value="#FFFFFF" maxlength="7" oninput="syncWcag('hex')">
+                </div>
+              </div>
+              <button class="btn-ghost" style="padding:11px 14px;border-radius:12px;" onclick="swapWcagColors()" title="Поменять местами">⇄</button>
+              <div>
+                <span class="field-label">ЦВЕТ ФОНА</span>
+                <div class="picker-wrap">
+                  <input type="color" id="wcagBgColor" value="#16171b" oninput="syncWcag('picker')">
+                  <input type="text" id="wcagBgHex" value="#16171B" maxlength="7" oninput="syncWcag('hex')">
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:var(--bg-elevated);border-radius:14px;border:1px solid var(--border);">
+              <div>
+                <span class="field-label">КОЭФФИЦИЕНТ КОНТРАСТА</span>
+                <div id="wcagRatioVal" style="font-family:var(--font-mono);font-size:1.9rem;font-weight:600;">17.41 : 1</div>
+              </div>
+              <span class="status-pill pass" id="wcagMainVerdict">ОТЛИЧНО</span>
+            </div>
+
+            <div class="wcag-badges">
+              <div class="wcag-item"><span>Обычный текст (≥4.5)</span><span class="status-pill pass" id="bAANorm">НОРМА</span></div>
+              <div class="wcag-item"><span>Повышенная чёткость (≥7.0)</span><span class="status-pill pass" id="bAAANorm">НОРМА</span></div>
+              <div class="wcag-item"><span>Крупный заголовок (≥3.0)</span><span class="status-pill pass" id="bAALarge">НОРМА</span></div>
+              <div class="wcag-item"><span>Мелкие подписи (≥4.5)</span><span class="status-pill pass" id="bAAALarge">НОРМА</span></div>
+            </div>
+          </div>
+
+          <div class="mvp-panel">
+            <div id="wcagPreviewCard" style="border-radius:16px;padding:26px;border:1px solid var(--border);background:#16171B;color:#FFFFFF;min-height:210px;display:flex;flex-direction:column;justify-content:space-between;">
+              <span style="font-family:var(--font-mono);font-size:0.73rem;opacity:0.8;">ПРИМЕР ОТОБРАЖЕНИЯ ТЕКСТА</span>
+              <div>
+                <h4 style="font-size:1.35rem;font-weight:600;margin-bottom:8px;">Крупный заголовок 24px</h4>
+                <p style="font-size:0.92rem;opacity:0.92;">Основной текст 16px. Проверяйте, насколько легко читаются надписи и кнопки на выбранном фоне перед сохранением работы.</p>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span id="wcagLumInfo" style="font-family:var(--font-mono);font-size:0.72rem;opacity:0.8;">Яркость: 1.00 / 0.01</span>
+                <button class="btn-white" style="padding:8px 16px;font-size:0.78rem;" onclick="copyWcagCss()">Скопировать цвета</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- МОДУЛЬ 2: КОНСТРУКТОР ШРИФТОВ И ЦВЕТОВ -->
+      <section id="module-fonts" class="mvp-block">
+        <div class="section-head">
+          <div class="section-title">Подбор шрифтовых пар и цветовых схем <span class="pill-tag">КОНСТРУКТОР</span></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="mvp-panel">
+            <div class="grid-2" style="gap:12px;">
+              <div>
+                <span class="field-label">ШРИФТОВАЯ ПАРА</span>
+                <select id="fontPairSel" class="studio-select" onchange="updateFontBuilder()">
+                  <option value="0">1. Универсальный гротеск (Inter)</option>
+                  <option value="1">2. Технический + Моноширинный</option>
+                  <option value="2">3. Журнальный с засечками + Чистый</option>
+                  <option value="3">4. Крупный плакатный для обложек</option>
+                </select>
+              </div>
+              <div>
+                <span class="field-label">ЦВЕТОВАЯ ПАЛИТРА</span>
+                <select id="paletteSel" class="studio-select" onchange="updateFontBuilder()">
+                  <option value="0">Графит и лаймовый акцент (#D4FF33)</option>
+                  <option value="1">Тёмно-синий и голубой (#38BDF8)</option>
+                  <option value="2">Тёмный уголь и янтарный (#F59E0B)</option>
+                  <option value="3">Строгий чёрно-белый (#FFFFFF)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-2" style="gap:12px;">
+              <div>
+                <span class="field-label">РАЗМЕР ЗАГОЛОВКА: <span id="scaleValLabel">28px</span></span>
+                <input type="range" id="fontScaleRange" min="22" max="38" value="28" style="width:100%;accent-color:var(--lime);" oninput="updateFontBuilder()">
+              </div>
+              <div>
+                <span class="field-label">МЕЖСТРОЧНЫЙ ИНТЕРВАЛ: <span id="lhValLabel">1.55</span></span>
+                <input type="range" id="fontLhRange" min="125" max="180" value="155" style="width:100%;accent-color:var(--lime);" oninput="updateFontBuilder()">
+              </div>
+            </div>
+
+            <div id="fontLiveStage" style="border-radius:16px;padding:24px;border:1px solid var(--border);background:#16171B;color:#F3F4F6;">
+              <span id="fontStageBadge" style="font-family:var(--font-mono);font-size:0.72rem;padding:3px 9px;border-radius:6px;background:#D4FF33;color:#121317;font-weight:600;">ПРИМЕР</span>
+              <h4 id="fontStageHeading" style="font-size:28px;font-weight:600;margin:12px 0 8px;">Чистая и понятная типографика</h4>
+              <p id="fontStageBody" style="font-size:0.92rem;color:#9CA3AF;line-height:1.55;">Правильное сочетание крупного заголовка и спокойного основного текста помогает зрителю сразу уловить суть проекта.</p>
+            </div>
+          </div>
+
+          <div class="mvp-panel">
+            <span class="field-label">ГОТОВЫЙ КОД СТИЛЕЙ ДЛЯ САЙТА</span>
+            <pre id="cssOutputBox" class="code-box"></pre>
+            <button class="btn-white" style="width:100%;justify-content:center;" onclick="copyBuilderCss()">Скопировать код стилей</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       СТРАНИЦА 3: ВДОХНОВЕНИЕ
+       ========================================================================== -->
+  <main id="page-inspiration" class="spa-page">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-title">Вдохновение и разбор работ <span class="pill-tag">ПРИМЕРЫ</span></div>
+      </div>
+      <div class="grid-2" id="inspirationGrid"></div>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       СТРАНИЦА 4: ОБУЧЕНИЕ + ЧЕК-ЛИСТ И ГЕНЕРАТОР ТЗ
+       ========================================================================== -->
+  <main id="page-education" class="spa-page">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-title">Обучение и полезные памятки <span class="pill-tag">БАЗА ЗНАНИЙ</span></div>
+        <button class="btn-white" style="padding:9px 18px;font-size:0.82rem;" onclick="document.getElementById('module-qa-brief').scrollIntoView({behavior:'smooth'})">Чек-лист и Генератор ТЗ ↓</button>
+      </div>
+      <div class="grid-2" id="educationGrid"></div>
+
+      <!-- МОДУЛЬ 3: ЧЕК-ЛИСТ САМОПРОВЕРКИ + ГЕНЕРАТОР ТЗ -->
+      <section id="module-qa-brief" class="mvp-block">
+        <div class="section-head">
+          <div class="section-title">Чек-лист самопроверки и Генератор ТЗ <span class="pill-tag">ПОДГОТОВКА ПРОЕКТА</span></div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Левая колонка: Чек-лист -->
+          <div class="mvp-panel">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-weight:600;">Готовность работы к сдаче</span>
+                <span id="qaPctLabel" style="font-family:var(--font-mono);color:var(--lime);font-weight:600;">0% (0/6)</span>
+              </div>
+              <div style="height:8px;background:var(--bg-elevated);border-radius:99px;overflow:hidden;">
+                <div id="qaBarFill" style="height:100%;width:0%;background:var(--lime);transition:width 0.25s ease;"></div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px;" id="qaListContainer">
+              <label class="check-row"><input type="checkbox" onchange="updateQaProgress()"><span>1. Главный объект и суть работы понятны с первого взгляда</span></label>
+              <label class="check-row"><input type="checkbox" onchange="updateQaProgress()"><span>2. Текст отлично читается и не сливается с фоном (контраст не ниже 4.5:1)</span></label>
+              <label class="check-row"><input type="checkbox" onchange="updateQaProgress()"><span>3. В кадре не более 3 главных элементов (нет перегруженности деталями)</span></label>
+              <label class="check-row"><input type="checkbox" onchange="updateQaProgress()"><span>4. Передний план отделён от фона светом или яркостью</span></label>
+              <label class="check-row"><input type="checkbox" onchange="updateQaProgress()"><span>5. По краям и в углах не перекрыты важные надписи</span></label>
+              <label class="check-row"><input type="checkbox" onchange="updateQaProgress()"><span>6. Макет проверен в уменьшенном размере (как на экране телефона)</span></label>
+            </div>
+
+            <button class="btn-ghost" style="justify-content:center;" onclick="resetQaChecklist()">Сбросить отметки</button>
+          </div>
+
+          <!-- Правая колонка: Генератор ТЗ -->
+          <div class="mvp-panel">
+            <div class="grid-2" style="gap:10px;">
+              <div>
+                <span class="field-label">НАЗВАНИЕ ПРОЕКТА</span>
+                <input type="text" id="tzName" class="studio-input" value="Оформление обложки и главной страницы" oninput="buildBriefDoc()">
+              </div>
+              <div>
+                <span class="field-label">ФОРМАТ РАБОТЫ</span>
+                <select id="tzFormat" class="studio-select" onchange="buildBriefDoc()">
+                  <option value="Обложка видео (1920×1080, 16:9)">Обложка видео (1920×1080)</option>
+                  <option value="Дизайн сайта (Компьютер + Телефон)">Дизайн сайта (ПК + Телефон)</option>
+                  <option value="Рекламный баннер (1080×1350)">Рекламный баннер (1080×1350)</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <span class="field-label">ОСНОВНАЯ ЗАДАЧА</span>
+              <input type="text" id="tzGoal" class="studio-input" value="Привлечь внимание в ленте, выделить заголовок и главного героя" oninput="buildBriefDoc()">
+            </div>
+            <pre id="briefOutputBox" class="code-box" style="max-height:175px;"></pre>
+            <button class="btn-white" style="width:100%;justify-content:center;" onclick="copyBriefDoc()">Скопировать готовое ТЗ</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       СТРАНИЦА 5: АНАЛИЗАТОР ПРЕВЬЮ И МАКЕТОВ (100% СТАБИЛЬНАЯ ОЦЕНКА)
+       ========================================================================== -->
+  <main id="page-analyzer" class="spa-page">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-title">Анализатор превью и дизайн-макетов <span class="pill-tag">ЛОКАЛЬНЫЙ AI</span></div>
+        <button class="btn-ghost" style="padding:8px 16px;font-size:0.8rem;" onclick="loadDemoDesignSample()">Загрузить пример макета</button>
+      </div>
+
+      <!-- Переключатель 3 режимов проверки -->
+      <div class="mode-tabs">
+        <button class="mode-btn active" data-mode="thumbnail" onclick="setAuditMode('thumbnail')">Обложки видео (Превью)</button>
+        <button class="mode-btn" data-mode="uiux" onclick="setAuditMode('uiux')">Сайты и интерфейсы</button>
+        <button class="mode-btn" data-mode="poster" onclick="setAuditMode('poster')">Рекламные баннеры и постеры</button>
+      </div>
+
+      <!-- Контекстная строка -->
+      <div class="context-bar">
+        <input type="text" id="auditContextTitle" class="studio-input" placeholder="Необязательно: укажите название ролика или тему проекта..." onchange="if(hasLoadedImage)runFullDesignAudit()">
+        <select id="auditNicheSelect" class="studio-select" onchange="if(hasLoadedImage)runFullDesignAudit()">
+          <option value="Универсальный дизайн">Тема: Автоопределение</option>
+          <option value="Игры и развлечения">Тема: Игры и развлечения</option>
+          <option value="Сайты и приложения">Тема: Сайты и сервисы</option>
+          <option value="Обучение и обзоры">Тема: Обучение и обзоры</option>
+        </select>
+        <button class="btn-white" onclick="document.getElementById('fileInput').click()">Загрузить свой файл</button>
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+      </div>
+
+      <div class="grid-2" style="align-items:start;">
+        <!-- Левая колонка: Холст и 5 режимов проверки -->
+        <div class="mvp-panel">
+          <div class="view-tabs">
+            <button class="view-btn active" id="vBtnOrig" onclick="setCanvasView('orig')">Оригинал</button>
+            <button class="view-btn" id="vBtnBw" onclick="setCanvasView('bw')">Ч/Б Тон</button>
+            <button class="view-btn" id="vBtnBlur" onclick="setCanvasView('blur')">Тест прищура</button>
+            <button class="view-btn" id="vBtnHeat" onclick="setCanvasView('heat')">Карта внимания</button>
+            <button class="view-btn" id="vBtnCtx" onclick="setCanvasView('ctx')">Как в ленте</button>
+          </div>
+
+          <div class="analysis-switch-bar">
+            <span class="field-label">ТЕХНИЧЕСКИЕ СЛОИ</span>
+            <button class="view-btn overlay-btn" id="overlayObjectsBtn" aria-pressed="true" onclick="toggleOverlay('objects')">AI-объекты</button>
+            <button class="view-btn overlay-btn" id="overlayThirdsBtn" aria-pressed="false" onclick="toggleOverlay('thirds')">Правило третей</button>
+            <button class="view-btn overlay-btn" id="overlaySafeBtn" aria-pressed="false" onclick="toggleOverlay('safe')">Безопасные зоны</button>
+          </div>
+
+          <div class="viewport-box" id="viewportBox">
+            <canvas id="mainCanvas" width="800" height="450"></canvas>
+            <canvas id="heatCanvas" width="420" height="236"></canvas>
+            <canvas id="overlayCanvas" width="800" height="450"></canvas>
+
+            <div class="context-frame" id="contextFrame">
+              <span style="font-size:0.78rem;font-weight:600;background:rgba(0,0,0,0.75);padding:4px 10px;border-radius:6px;">Предпросмотр в ленте</span>
+              <span style="font-family:var(--font-mono);font-size:0.74rem;background:#000;padding:3px 7px;border-radius:4px;">14:28</span>
+            </div>
+
+            <div class="dropzone" id="dropzoneOverlay" role="button" tabindex="0" onclick="document.getElementById('fileInput').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('fileInput').click()}">
+              <div class="icon-box" style="margin-bottom:14px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 16V4m0 0L8 8m4-4l4 4M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2"/></svg>
+              </div>
+              <h3 style="font-size:1.15rem;margin-bottom:6px;">Перетащите изображение сюда, нажмите для выбора или вставьте через Ctrl+V</h3>
+              <p style="color:var(--text-sec);font-size:0.84rem;">Поддерживаются PNG, JPG, WEBP. Оценка фиксируется за изображением и не скачет при повторных проверках.</p>
+            </div>
+
+            <div class="scan-overlay" id="scanOverlay">
+              <div class="laser-line"></div>
+              <span class="pill-tag" style="color:var(--lime);margin-bottom:10px;" id="scanStepBadge">ШАГ 1 / 4 • АНАЛИЗ</span>
+              <h3 id="scanTitleText" style="font-size:1.15rem;margin-bottom:6px;">Анализ композиции и светотени...</h3>
+              <p id="scanSubText" style="color:var(--text-sec);font-size:0.82rem;">Вычисление контраста, читаемости и разбор работы</p>
+            </div>
+          </div>
+
+          <div class="engine-line">
+            <span class="engine-state" id="aiEngineState">AI запустится при анализе</span>
+            <span class="engine-note" id="aiEngineNote">Изображение остаётся в вашем браузере</span>
+          </div>
+
+          <div style="padding:16px 18px;border-radius:14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:10px;flex-wrap:wrap;">
+              <span class="field-label" style="margin:0;">ЧТО НА ИЗОБРАЖЕНИИ</span>
+              <span class="pill-tag" id="detectedTypeBadge">ОЖИДАНИЕ ФАЙЛА</span>
+            </div>
+            <p id="recognizedPlotText" style="font-size:0.86rem;color:var(--text-sec);">
+              Загрузите свою работу или нажмите «Загрузить пример макета» выше. AI найдёт лица и объекты, а затем разберёт композицию, свет, читаемость и цвет.
+            </p>
+            <div class="detection-list" id="detectionList" aria-live="polite"></div>
+            <div class="palette-strip" id="paletteStrip" aria-label="Распределение основных цветов"></div>
+            <div class="diagnostic-grid" id="diagnosticGrid" hidden>
+              <div class="diagnostic-cell"><span>БАЛАНС ЛЕВО / ПРАВО</span><strong id="metricHorizontal">—</strong></div>
+              <div class="diagnostic-cell"><span>БАЛАНС ВЕРХ / НИЗ</span><strong id="metricVertical">—</strong></div>
+              <div class="diagnostic-cell"><span>ПЕРЕСВЕТЫ</span><strong id="metricHighlights">—</strong></div>
+              <div class="diagnostic-cell"><span>ГЛУБОКИЕ ТЕНИ</span><strong id="metricShadows">—</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Правая колонка: Оценка (с 0.0) и 4 блока советов -->
+        <div class="mvp-panel">
+          <div class="score-head">
+            <div>
+              <span class="field-label" id="auditProfileLabel">ИТОГОВАЯ ОЦЕНКА • ОБЛОЖКИ ВИДЕО</span>
+              <h3 id="verdictTitle" style="font-size:1.3rem;margin:4px 0;">Ожидание загрузки</h3>
+              <p id="verdictSub" style="font-size:0.84rem;color:var(--text-sec);">Стартовый балл 0.0 — загрузите изображение для проверки</p>
+            </div>
+            <div class="gauge-wrap">
+              <svg class="gauge-svg" viewBox="0 0 88 88">
+                <circle class="gauge-bg" cx="44" cy="44" r="38"></circle>
+                <circle class="gauge-fill" id="gaugeArc" cx="44" cy="44" r="38"></circle>
+              </svg>
+              <div class="gauge-num" id="scoreNum">0.0</div>
+            </div>
+          </div>
+
+          <div class="sub-scores">
+            <div class="sub-card"><span id="subLbl1">1. Композиция</span><strong id="subVal1">0.0</strong></div>
+            <div class="sub-card"><span id="subLbl2">2. Свет и объём</span><strong id="subVal2">0.0</strong></div>
+            <div class="sub-card"><span id="subLbl3">3. Текст</span><strong id="subVal3">0.0</strong></div>
+            <div class="sub-card"><span id="subLbl4">4. Цвет и контраст</span><strong id="subVal4">0.0</strong></div>
+          </div>
+
+          <div id="critiqueList">
+            <div class="tip-card" style="color:var(--text-sec);">
+              После загрузки анализатор вычислит точные баллы по 4 критериям, проверит работу на типичные ошибки и составит список рекомендаций.
+            </div>
+          </div>
+
+          <div id="actionPlanWrap" style="display:none;padding:16px;border-radius:14px;background:rgba(212,255,51,0.05);border:1px solid rgba(212,255,51,0.3);">
+            <span class="field-label" style="color:var(--lime);">СОВЕТЫ ПО УЛУЧШЕНИЮ РАБОТЫ</span>
+            <div id="actionStepsList" style="font-size:0.84rem;display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Модальное окно для карточек и рекламы -->
+  <div class="modal-backdrop" id="studioModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" onclick="if(event.target===this)closeModal()">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <span class="pill-tag" id="modalTag">РАЗДЕЛ</span>
+        <button class="btn-ghost" id="modalCloseBtn" style="padding:6px 12px;font-size:0.78rem;" onclick="closeModal()">Закрыть ✕</button>
+      </div>
+      <h3 id="modalTitle" style="font-size:1.45rem;margin-bottom:10px;"></h3>
+      <div id="modalBody" style="color:var(--text-sec);font-size:0.92rem;line-height:1.6;"></div>
+    </div>
+  </div>
+
+  <!-- Плавающий виджет поддержки -->
+  <button class="support-fab" onclick="toggleSupport()">Поддержка и помощник</button>
+  <div class="support-box" id="supportBox">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;">
+      <strong style="font-size:0.88rem;">Поддержка CTRL.PNG</strong>
+      <button onclick="toggleSupport()" style="color:var(--text-sec);">✕</button>
+    </div>
+    <div class="chat-log" id="chatLog">
+      <div class="bubble bot">Привет! Я помощник сайта CTRL.PNG. Отвечу на вопросы по материалам, проверке контраста или работе анализатора.</div>
+    </div>
+    <div style="padding:10px;display:flex;gap:8px;border-top:1px solid var(--border-subtle);">
+      <input type="text" id="chatInput" class="studio-input" placeholder="Напишите ваш вопрос..." onkeydown="if(event.key==='Enter')sendSupportMsg()">
+      <button class="btn-white" style="padding:8px 14px;" onclick="sendSupportMsg()">→</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toastBox">Скопировано в буфер обмена</div>
+
+  <footer>
+    <div class="container" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+      <span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-sec);">CTRL.PNG © 2026 — ВСЕ ИНСТРУМЕНТЫ ДИЗАЙНЕРА В ОДНОМ МЕСТЕ</span>
+      <div style="display:flex;gap:18px;font-size:0.84rem;color:var(--text-sec);">
+        <a href="#page-materials" onclick="switchPage('materials');return false;">Материалы</a>
+        <a href="#page-inspiration" onclick="switchPage('inspiration');return false;">Вдохновение</a>
+        <a href="#page-education" onclick="switchPage('education');return false;">Обучение</a>
+        <a href="#page-analyzer" onclick="switchPage('analyzer');return false;">Анализатор</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /* ==========================================================================
+       ДАННЫЕ КАРТОЧЕК И СТРОГИХ SVG-ИКОНОК (НА ЧИСТОМ РУССКОМ ЯЗЫКЕ)
+       ========================================================================== */
+    const ICONS = {
+      font: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>',
+      palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/><circle cx="12" cy="15" r="1.2"/></svg>',
+      texture: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 16l9 5 9-5"/></svg>',
+      psd: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 20V9"/></svg>',
+      viral: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+      grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
+      trend: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>',
+      guide: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>',
+      alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>',
+      spec: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></svg>'
+    };
+
+    const MATERIALS_DATA = [
+      { id: 'fonts', icon: ICONS.font, tag: 'ШРИФТЫ', title: 'Шрифты для заголовков и сайтов', desc: 'Подборка выразительных шрифтов для крупных надписей на превью и удобного чтения в интерфейсах.' },
+      { id: 'palettes', icon: ICONS.palette, tag: 'ПАЛИТРЫ', title: 'Палитры и цветовые сочетания', desc: 'Готовые цветовые схемы с правильным контрастом между главным объектом и тёмным фоном.' },
+      { id: 'textures', icon: ICONS.texture, tag: 'ТЕКСТУРЫ', title: 'Текстуры, свечения и блики', desc: 'Мягкие источники света, дымка, зернистость и контурные блики без заднего фона.' },
+      { id: 'psd', icon: ICONS.psd, tag: 'ШАБЛОНЫ', title: 'Готовые шаблоны и сетки', desc: 'Удобная структура папок и слоёв для быстрого старта работы в графическом редакторе.' }
+    ];
+
+    const INSPIRATION_DATA = [
+      { id: 'viral', wide: true, icon: ICONS.viral, tag: 'ПРИМЕРЫ', title: 'Вирусные превью и яркие обложки', desc: 'Как удержать взгляд зрителя за долю секунды: правило трёх объектов, живая эмоция и чёткое отделение героя от фона.', diagram: '1. ГЛАВНЫЙ ГЕРОЙ ИЛИ ПРЕДМЕТ (ОСНОВНОЙ АКЦЕНТ)\n2. ДЕТАЛЬ, ВЫЗЫВАЮЩАЯ ИНТЕРЕС\n3. КОРОТКИЙ КРУПНЫЙ ТЕКСТ (1–3 СЛОВА)' },
+      { id: 'comp', wide: false, icon: ICONS.grid, tag: 'КОМПОЗИЦИЯ', title: 'Разбор композиции', desc: 'Правило третей, направление взгляда и свободное место вокруг главных надписей.' },
+      { id: 'trends', wide: false, icon: ICONS.trend, tag: 'ТРЕНДЫ', title: 'Тренды оформления', desc: 'Естественный объёмный свет, аккуратная работа с деталями и чистая вёрстка без лишнего шума.' }
+    ];
+
+    const EDUCATION_DATA = [
+      { id: 'guide', wide: true, icon: ICONS.guide, tag: 'РУКОВОДСТВО', title: 'Пошаговый гайд по созданию превью и макетов', desc: 'Понятный порядок работы: от расположения главных предметов и настройки света до проверки читаемости текста.', diagram: 'ШАГ 1: ПРОВЕРКА СИЛУЭТА В Ч/Б РЕЖИМЕ\nШАГ 2: ОТДЕЛЕНИЕ ГЕРОЯ КОНТУРНЫМ СВЕТОМ\nШАГ 3: ПРОВЕРКА ЧИТАЕМОСТИ ТЕКСТА' },
+      { id: 'mistakes', wide: false, icon: ICONS.alert, tag: 'ЧАСТЫЕ ОШИБКИ', title: 'Ошибки новичков', desc: 'Слишком много мелких деталей, грязные чёрные тени, нечитаемый текст и отсутствие воздуха.' },
+      { id: 'specs', wide: false, icon: ICONS.spec, tag: 'ПАРАМЕТРЫ', title: 'Технические параметры', desc: 'Правильные размеры холста, сохранение чёткости и учёт зон, которые перекрываются кнопками плеера.' }
+    ];
+
+    function renderCards() {
+      const matHtml = MATERIALS_DATA.map(c => `
+        <article class="card" role="button" tabindex="0" onclick="openModal('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModal('${c.id}')}">
+          <div class="card-top">
+            <div class="icon-box">${c.icon}</div>
+            <span class="pill-tag">${c.tag}</span>
+          </div>
+          <div>
+            <h3>${c.title}</h3>
+            <p>${c.desc}</p>
+          </div>
+        </article>
+      `).join('');
+      document.getElementById('homeMaterialsGrid').innerHTML = matHtml;
+      document.getElementById('fullMaterialsGrid').innerHTML = matHtml;
+
+      document.getElementById('inspirationGrid').innerHTML = INSPIRATION_DATA.map(c => `
+        <article class="card ${c.wide ? 'wide' : ''}" role="button" tabindex="0" onclick="openModal('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModal('${c.id}')}">
+          <div>
+            <div class="card-top" style="margin-bottom:20px;">
+              <div class="icon-box">${c.icon}</div>
+              <span class="pill-tag">${c.tag}</span>
+            </div>
+            <h3>${c.title}</h3>
+            <p>${c.desc}</p>
+          </div>
+          ${c.wide ? `<div class="diagram-box"><div style="color:var(--lime);margin-bottom:8px;">СХЕМА ПОСТРОЕНИЯ КАДРА:</div><pre style="white-space:pre-wrap;line-height:1.7;">${c.diagram}</pre></div>` : ''}
+        </article>
+      `).join('');
+
+      document.getElementById('educationGrid').innerHTML = EDUCATION_DATA.map(c => `
+        <article class="card ${c.wide ? 'wide' : ''}" role="button" tabindex="0" onclick="openModal('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModal('${c.id}')}">
+          <div>
+            <div class="card-top" style="margin-bottom:20px;">
+              <div class="icon-box">${c.icon}</div>
+              <span class="pill-tag">${c.tag}</span>
+            </div>
+            <h3>${c.title}</h3>
+            <p>${c.desc}</p>
+          </div>
+          ${c.wide ? `<div class="diagram-box"><div style="color:var(--lime);margin-bottom:8px;">ПОРЯДОК САМОПРОВЕРКИ:</div><pre style="white-space:pre-wrap;line-height:1.7;">${c.diagram}</pre></div>` : ''}
+        </article>
+      `).join('');
+    }
+
+    /* Переключение страниц и смена фона */
+    function switchPage(pageId) {
+      document.querySelectorAll('.spa-page').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById('page-' + pageId);
+      if (target) target.classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === pageId));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    const GRID_MODES = [
+      { cls: 'grid-blueprint', label: 'Фон: Чертёж' },
+      { cls: 'grid-png', label: 'Фон: Клетка' },
+      { cls: 'grid-clean', label: 'Фон: Чистый' }
+    ];
+    let gridIdx = 0;
+    function cycleGridMode() {
+      document.body.classList.remove(GRID_MODES[gridIdx].cls);
+      gridIdx = (gridIdx + 1) % GRID_MODES.length;
+      document.body.classList.add(GRID_MODES[gridIdx].cls);
+      document.getElementById('gridToggleBtn').textContent = GRID_MODES[gridIdx].label;
+    }
+
+    /* ==========================================================================
+       МОДУЛЬ 1: КАЛЬКУЛЯТОР КОНТРАСТА ТЕКСТА И ФОНА
+       ========================================================================== */
+    function hexToRgb(hex) {
+      const clean = hex.replace('#', '').trim();
+      if (!/^[0-9A-Fa-f]{6}$/.test(clean)) return null;
+      return {
+        r: parseInt(clean.slice(0, 2), 16),
+        g: parseInt(clean.slice(2, 4), 16),
+        b: parseInt(clean.slice(4, 6), 16)
+      };
+    }
+
+    function getRelativeLuminance({ r, g, b }) {
+      const [R, G, B] = [r, g, b].map(v => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+    }
+
+    function syncWcag(source) {
+      const fgPicker = document.getElementById('wcagFgColor');
+      const bgPicker = document.getElementById('wcagBgColor');
+      const fgHex = document.getElementById('wcagFgHex');
+      const bgHex = document.getElementById('wcagBgHex');
+
+      if (source === 'picker') {
+        fgHex.value = fgPicker.value.toUpperCase();
+        bgHex.value = bgPicker.value.toUpperCase();
+      } else {
+        if (hexToRgb(fgHex.value)) fgPicker.value = fgHex.value;
+        if (hexToRgb(bgHex.value)) bgPicker.value = bgHex.value;
+      }
+
+      const rgb1 = hexToRgb(fgHex.value) || { r: 255, g: 255, b: 255 };
+      const rgb2 = hexToRgb(bgHex.value) || { r: 22, g: 23, b: 27 };
+      const l1 = getRelativeLuminance(rgb1);
+      const l2 = getRelativeLuminance(rgb2);
+      const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+
+      document.getElementById('wcagRatioVal').textContent = ratio.toFixed(2) + ' : 1';
+      document.getElementById('wcagLumInfo').textContent = `Яркость: ${l1.toFixed(2)} / ${l2.toFixed(2)}`;
+
+      const card = document.getElementById('wcagPreviewCard');
+      card.style.color = fgPicker.value;
+      card.style.backgroundColor = bgPicker.value;
+
+      const setBadge = (id, pass) => {
+        const el = document.getElementById(id);
+        el.textContent = pass ? 'НОРМА' : 'СЛАБО';
+        el.className = 'status-pill ' + (pass ? 'pass' : 'fail');
+      };
+      setBadge('bAANorm', ratio >= 4.5);
+      setBadge('bAAANorm', ratio >= 7.0);
+      setBadge('bAALarge', ratio >= 3.0);
+      setBadge('bAAALarge', ratio >= 4.5);
+
+      const mainV = document.getElementById('wcagMainVerdict');
+      if (ratio >= 7.0) { mainV.textContent = 'ОТЛИЧНО'; mainV.className = 'status-pill pass'; }
+      else if (ratio >= 4.5) { mainV.textContent = 'ХОРОШО'; mainV.className = 'status-pill pass'; }
+      else { mainV.textContent = 'НИЗКИЙ КОНТРАСТ'; mainV.className = 'status-pill fail'; }
+    }
+
+    function setWcagPreset(fg, bg) {
+      document.getElementById('wcagFgColor').value = fg;
+      document.getElementById('wcagBgColor').value = bg;
+      syncWcag('picker');
+    }
+
+    function swapWcagColors() {
+      const fg = document.getElementById('wcagFgColor').value;
+      const bg = document.getElementById('wcagBgColor').value;
+      setWcagPreset(bg, fg);
+    }
+
+    function copyWcagCss() {
+      const fg = document.getElementById('wcagFgHex').value;
+      const bg = document.getElementById('wcagBgHex').value;
+      const ratio = document.getElementById('wcagRatioVal').textContent;
+      copyText(`/* Контраст: ${ratio} */\ncolor: ${fg};\nbackground-color: ${bg};`);
+    }
+
+    /* ==========================================================================
+       МОДУЛЬ 2: КОНСТРУКТОР ШРИФТОВЫХ ПАР И ЦВЕТОВ
+       ========================================================================== */
+    const FONT_PAIRS = [
+      { name: 'Универсальный гротеск (Inter)', hFont: "'Inter', sans-serif", bFont: "'Inter', sans-serif", weight: '600', ls: '-0.03em' },
+      { name: 'Технический + Моноширинный', hFont: "system-ui, sans-serif", bFont: "'JetBrains Mono', monospace", weight: '700', ls: '-0.02em' },
+      { name: 'Журнальный с засечками + Чистый', hFont: "Georgia, serif", bFont: "'Inter', sans-serif", weight: '600', ls: '-0.01em' },
+      { name: 'Крупный плакатный для обложек', hFont: "'Arial Black', Impact, sans-serif", bFont: "'Inter', sans-serif", weight: '700', ls: '0.01em' }
+    ];
+
+    const STUDIO_PALETTES = [
+      { bg: '#16171B', surface: '#1D1F26', text: '#F3F4F6', muted: '#9CA3AF', accent: '#D4FF33' },
+      { bg: '#0F172A', surface: '#1E293B', text: '#F8FAFC', muted: '#94A3B8', accent: '#38BDF8' },
+      { bg: '#181617', surface: '#242022', text: '#FAF5F0', muted: '#A8A29E', accent: '#F59E0B' },
+      { bg: '#121212', surface: '#1E1E1E', text: '#FFFFFF', muted: '#A3A3A3', accent: '#FFFFFF' }
+    ];
+
+    function updateFontBuilder() {
+      const fp = FONT_PAIRS[document.getElementById('fontPairSel').value];
+      const pal = STUDIO_PALETTES[document.getElementById('paletteSel').value];
+      const scale = document.getElementById('fontScaleRange').value;
+      const lh = (document.getElementById('fontLhRange').value / 100).toFixed(2);
+
+      document.getElementById('scaleValLabel').textContent = scale + 'px';
+      document.getElementById('lhValLabel').textContent = lh;
+
+      const stage = document.getElementById('fontLiveStage');
+      const heading = document.getElementById('fontStageHeading');
+      const body = document.getElementById('fontStageBody');
+      const badge = document.getElementById('fontStageBadge');
+
+      stage.style.backgroundColor = pal.bg;
+      stage.style.color = pal.text;
+      badge.style.backgroundColor = pal.accent;
+      badge.style.color = '#121317';
+
+      heading.style.fontFamily = fp.hFont;
+      heading.style.fontSize = scale + 'px';
+      heading.style.fontWeight = fp.weight;
+      heading.style.letterSpacing = fp.ls;
+
+      body.style.fontFamily = fp.bFont;
+      body.style.color = pal.muted;
+      body.style.lineHeight = lh;
+
+      document.getElementById('cssOutputBox').textContent = `:root {
+  /* Цветовая схема CTRL.PNG */
+  --bg-primary: ${pal.bg};
+  --bg-surface: ${pal.surface};
+  --text-primary: ${pal.text};
+  --text-secondary: ${pal.muted};
+  --accent-main: ${pal.accent};
+
+  /* Шрифтовая пара: ${fp.name} */
+  --font-heading: ${fp.hFont};
+  --font-body: ${fp.bFont};
+  --heading-size: ${scale}px;
+  --body-line-height: ${lh};
+}`;
+    }
+
+    function copyBuilderCss() {
+      copyText(document.getElementById('cssOutputBox').textContent);
+    }
+
+    /* ==========================================================================
+       МОДУЛЬ 3: ЧЕК-ЛИСТ САМОПРОВЕРКИ + ГЕНЕРАТОР ТЗ
+       ========================================================================== */
+    function updateQaProgress() {
+      const rows = document.querySelectorAll('#qaListContainer .check-row');
+      let done = 0;
+      rows.forEach(r => {
+        const cb = r.querySelector('input');
+        r.classList.toggle('checked', cb.checked);
+        if (cb.checked) done++;
+      });
+      const pct = Math.round((done / rows.length) * 100);
+      document.getElementById('qaPctLabel').textContent = `${pct}% (${done}/${rows.length})`;
+      document.getElementById('qaBarFill').style.width = pct + '%';
+    }
+
+    function resetQaChecklist() {
+      document.querySelectorAll('#qaListContainer input').forEach(cb => cb.checked = false);
+      updateQaProgress();
+    }
+
+    function buildBriefDoc() {
+      const name = document.getElementById('tzName').value || 'Без названия';
+      const fmt = document.getElementById('tzFormat').value;
+      const goal = document.getElementById('tzGoal').value || 'Привлечь внимание и выделить суть';
+      document.getElementById('briefOutputBox').textContent = `ТЕХНИЧЕСКОЕ ЗАДАНИЕ (CTRL.PNG)
+====================================
+1. Проект: ${name}
+2. Формат и размер: ${fmt}
+3. Основная задача: ${goal}
+4. Требования к качеству:
+   - Контраст текста к фону не ниже 4.5:1
+   - Не более 3 главных элементов в кадре
+   - Чёткое отделение главного объекта от фона светом
+   - Готовый файл в формате PNG / JPG + исходник по слоям.`;
+    }
+
+    function copyBriefDoc() {
+      copyText(document.getElementById('briefOutputBox').textContent);
+    }
+
+    /* ==========================================================================
+       МОДУЛЬ 4: ЛОКАЛЬНЫЙ AI-АНАЛИЗАТОР С ДЕТЕРМИНИРОВАННОЙ ОЦЕНКОЙ
+       ========================================================================== */
+    let currentAuditMode = 'thumbnail';
+    let hasLoadedImage = false;
+    let activeAuditRun = 0;
+    let currentAuditResult = null;
+    let currentDetections = [];
+    const auditMemoryCache = new Map();
+    const detectionMemoryCache = new Map();
+    const AUDIT_ENGINE_VERSION = 'local-ai-3.0-pro';
+    const overlayState = { objects: true, thirds: false, safe: false };
+    const aiEngine = { status: 'idle', coco: null, face: null, promise: null };
+
+    const AUDIT_PROFILES = {
+      thumbnail: {
+        header: 'ИТОГОВАЯ ОЦЕНКА • ОБЛОЖКИ ВИДЕО',
+        labels: ['1. Композиция', '2. Свет и объём', '3. Читаемость текста', '4. Цвет и контраст'],
+        type: 'ОБЛОЖКА ВИДЕО',
+        weights: [0.32, 0.24, 0.24, 0.20]
+      },
+      uiux: {
+        header: 'ИТОГОВАЯ ОЦЕНКА • САЙТЫ И ИНТЕРФЕЙСЫ',
+        labels: ['1. Структура и баланс', '2. Свет и глубина', '3. Читаемость текста', '4. Цвет и акценты'],
+        type: 'МАКЕТ ИНТЕРФЕЙСА',
+        weights: [0.28, 0.18, 0.34, 0.20]
+      },
+      poster: {
+        header: 'ИТОГОВАЯ ОЦЕНКА • РЕКЛАМНЫЕ ПОСТЕРЫ',
+        labels: ['1. Главный акцент', '2. Свет и глубина', '3. Читаемость текста', '4. Цветовая гармония'],
+        type: 'РЕКЛАМНЫЙ МАКЕТ',
+        weights: [0.30, 0.22, 0.22, 0.26]
+      }
+    };
+
+    const OBJECT_LABELS = {
+      person: 'человек', bicycle: 'велосипед', car: 'автомобиль', motorcycle: 'мотоцикл',
+      airplane: 'самолёт', bus: 'автобус', train: 'поезд', truck: 'грузовик', boat: 'лодка',
+      'traffic light': 'светофор', 'stop sign': 'дорожный знак', bench: 'скамейка',
+      bird: 'птица', cat: 'кошка', dog: 'собака', horse: 'лошадь', sheep: 'овца', cow: 'корова',
+      elephant: 'слон', bear: 'медведь', zebra: 'зебра', giraffe: 'жираф', backpack: 'рюкзак',
+      umbrella: 'зонт', handbag: 'сумка', tie: 'галстук', suitcase: 'чемодан', skis: 'лыжи',
+      snowboard: 'сноуборд', 'sports ball': 'спортивный мяч', skateboard: 'скейтборд',
+      surfboard: 'доска для сёрфинга', 'tennis racket': 'теннисная ракетка', bottle: 'бутылка',
+      'wine glass': 'бокал', cup: 'чашка', fork: 'вилка', knife: 'нож', spoon: 'ложка', bowl: 'миска',
+      banana: 'банан', apple: 'яблоко', sandwich: 'сэндвич', orange: 'апельсин', broccoli: 'брокколи',
+      carrot: 'морковь', pizza: 'пицца', donut: 'пончик', cake: 'торт', chair: 'стул', couch: 'диван',
+      'potted plant': 'комнатное растение', bed: 'кровать', 'dining table': 'обеденный стол',
+      tv: 'экран', laptop: 'ноутбук', mouse: 'компьютерная мышь', remote: 'пульт',
+      keyboard: 'клавиатура', 'cell phone': 'смартфон', microwave: 'микроволновая печь',
+      oven: 'духовка', toaster: 'тостер', sink: 'раковина', refrigerator: 'холодильник',
+      book: 'книга', clock: 'часы', vase: 'ваза', scissors: 'ножницы',
+      'teddy bear': 'игрушечный медведь', 'hair drier': 'фен', toothbrush: 'зубная щётка'
+    };
+
+    const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+    const round1 = value => Number(value.toFixed(1));
+    const pct = value => Math.round(value * 100) + '%';
+    const nextFrame = () => new Promise(resolve => requestAnimationFrame(resolve));
+
+    function showToast(message) {
+      const toast = document.getElementById('toastBox');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+
+    function updateScanStage(step, title, subtitle) {
+      document.getElementById('scanStepBadge').textContent = `ШАГ ${step} / 4 • AI-АНАЛИЗ`;
+      document.getElementById('scanTitleText').textContent = title;
+      document.getElementById('scanSubText').textContent = subtitle;
+    }
+
+    function updateAIEngineUI() {
+      const state = document.getElementById('aiEngineState');
+      const note = document.getElementById('aiEngineNote');
+      const states = {
+        idle: ['AI запустится при анализе', 'Изображение остаётся в вашем браузере'],
+        loading: ['Загрузка локальной нейросети…', 'Первый запуск может занять немного времени'],
+        ready: ['Локальный AI • объекты и лица', 'Обработка только на вашем устройстве'],
+        fallback: ['Резервный анализ • AI недоступен', 'Используются карты света, цвета и контуров']
+      };
+      const copy = states[aiEngine.status] || states.idle;
+      state.textContent = copy[0];
+      state.className = 'engine-state ' + aiEngine.status;
+      note.textContent = copy[1];
+    }
+
+    function setAuditMode(mode) {
+      currentAuditMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(button => button.classList.toggle('active', button.dataset.mode === mode));
+      const profile = AUDIT_PROFILES[mode];
+      document.getElementById('auditProfileLabel').textContent = profile.header;
+      profile.labels.forEach((label, index) => {
+        document.getElementById('subLbl' + (index + 1)).textContent = label;
+      });
+      if (hasLoadedImage) runFullDesignAudit();
+    }
+
+    function setCanvasView(view) {
+      document.querySelectorAll('.view-tabs .view-btn').forEach(button => button.classList.remove('active'));
+      const map = { orig: 'vBtnOrig', bw: 'vBtnBw', blur: 'vBtnBlur', heat: 'vBtnHeat', ctx: 'vBtnCtx' };
+      document.getElementById(map[view]).classList.add('active');
+      const mainCanvas = document.getElementById('mainCanvas');
+      const heatCanvas = document.getElementById('heatCanvas');
+      const contextFrame = document.getElementById('contextFrame');
+      mainCanvas.style.filter = 'none';
+      heatCanvas.style.opacity = '0';
+      contextFrame.classList.remove('active');
+      if (view === 'bw') mainCanvas.style.filter = 'grayscale(100%) contrast(1.08)';
+      if (view === 'blur') mainCanvas.style.filter = 'blur(11px) saturate(1.1)';
+      if (view === 'heat') heatCanvas.style.opacity = '0.88';
+      if (view === 'ctx') contextFrame.classList.add('active');
+    }
+
+    function toggleOverlay(layer) {
+      overlayState[layer] = !overlayState[layer];
+      const buttonIds = { objects: 'overlayObjectsBtn', thirds: 'overlayThirdsBtn', safe: 'overlaySafeBtn' };
+      document.getElementById(buttonIds[layer]).setAttribute('aria-pressed', String(overlayState[layer]));
+      drawAnalysisOverlay(currentDetections);
+    }
+
+    const viewportBox = document.getElementById('viewportBox');
+    viewportBox.addEventListener('dragover', event => {
+      event.preventDefault();
+      viewportBox.style.borderColor = 'var(--lime)';
+    });
+    viewportBox.addEventListener('dragleave', () => { viewportBox.style.borderColor = ''; });
+    viewportBox.addEventListener('drop', event => {
+      event.preventDefault();
+      viewportBox.style.borderColor = '';
+      if (event.dataTransfer.files && event.dataTransfer.files[0]) loadFileIntoCanvas(event.dataTransfer.files[0]);
+    });
+    window.addEventListener('paste', event => {
+      const items = event.clipboardData && event.clipboardData.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          switchPage('analyzer');
+          loadFileIntoCanvas(item.getAsFile());
+          break;
+        }
+      }
+    });
+
+    function handleFileSelect(event) {
+      if (event.target.files && event.target.files[0]) loadFileIntoCanvas(event.target.files[0]);
+      event.target.value = '';
+    }
+
+    function loadFileIntoCanvas(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        showToast('Выберите изображение PNG, JPG или WEBP');
+        return;
+      }
+      if (file.size > 25 * 1024 * 1024) {
+        showToast('Файл слишком большой. Максимальный размер — 25 МБ');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onerror = () => showToast('Не удалось прочитать файл');
+      reader.onload = event => {
+        const image = new Image();
+        image.onerror = () => showToast('Этот формат изображения не удалось открыть');
+        image.onload = () => drawAndAuditImage(image);
+        image.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function prepareSourceCanvas(width, height) {
+      const canvas = document.getElementById('mainCanvas');
+      const scale = Math.min(1, 1600 / Math.max(width, height));
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      context.fillStyle = '#0e1015';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      document.getElementById('viewportBox').style.aspectRatio = `${canvas.width} / ${canvas.height}`;
+      const overlay = document.getElementById('overlayCanvas');
+      overlay.width = canvas.width;
+      overlay.height = canvas.height;
+      return { canvas, context };
+    }
+
+    function loadDemoDesignSample() {
+      const prepared = prepareSourceCanvas(800, 450);
+      const canvas = prepared.canvas;
+      const context = prepared.context;
+      const background = context.createLinearGradient(0, 0, 800, 450);
+      background.addColorStop(0, '#0f131d');
+      background.addColorStop(1, '#1a1f2e');
+      context.fillStyle = background;
+      context.fillRect(0, 0, 800, 450);
+      const glow = context.createRadialGradient(560, 230, 20, 560, 230, 220);
+      glow.addColorStop(0, 'rgba(212, 255, 51, 0.58)');
+      glow.addColorStop(1, 'rgba(212, 255, 51, 0)');
+      context.fillStyle = glow;
+      context.fillRect(0, 0, 800, 450);
+      context.fillStyle = '#262b38';
+      context.strokeStyle = '#d4ff33';
+      context.lineWidth = 4;
+      context.beginPath();
+      context.roundRect(450, 75, 250, 300, 22);
+      context.fill();
+      context.stroke();
+      context.fillStyle = '#ffffff';
+      context.font = 'bold 64px Inter, sans-serif';
+      context.fillText('CTRL.PNG', 55, 195);
+      context.fillStyle = '#d4ff33';
+      context.fillRect(55, 220, 320, 74);
+      context.fillStyle = '#121317';
+      context.font = 'bold 48px Inter, sans-serif';
+      context.fillText('ОБЗОР 2026', 74, 275);
+      hasLoadedImage = true;
+      document.getElementById('dropzoneOverlay').classList.add('hidden');
+      runFullDesignAudit();
+    }
+
+    function drawAndAuditImage(image) {
+      const prepared = prepareSourceCanvas(image.naturalWidth || image.width, image.naturalHeight || image.height);
+      prepared.context.drawImage(image, 0, 0, prepared.canvas.width, prepared.canvas.height);
+      hasLoadedImage = true;
+      document.getElementById('dropzoneOverlay').classList.add('hidden');
+      runFullDesignAudit();
+    }
+
+    function computeVisualFeaturesAndHeatmap() {
+      const source = document.getElementById('mainCanvas');
+      const heatCanvas = document.getElementById('heatCanvas');
+      const scale = 360 / Math.max(source.width, source.height);
+      const width = Math.max(64, Math.round(source.width * scale));
+      const height = Math.max(64, Math.round(source.height * scale));
+      heatCanvas.width = width;
+      heatCanvas.height = height;
+      const context = heatCanvas.getContext('2d', { willReadFrequently: true });
+      context.drawImage(source, 0, 0, width, height);
+      const imageData = context.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      const total = width * height;
+      const luminance = new Float32Array(total);
+      const saturation = new Float32Array(total);
+      const histogram = new Uint32Array(256);
+      const colorBuckets = new Map();
+      let hash = 2166136261;
+      let sumL = 0, sumSat = 0, highlights = 0, shadows = 0, muddyShadows = 0;
+      let centerL = 0, centerCount = 0, outerL = 0, outerCount = 0;
+      let sumRg = 0, sumYb = 0, sumRg2 = 0, sumYb2 = 0;
+
+      for (let index = 0, pixel = 0; index < data.length; index += 4, pixel++) {
+        const r = data[index], g = data[index + 1], b = data[index + 2];
+        const l = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        const sat = max === 0 ? 0 : (max - min) / max;
+        luminance[pixel] = l;
+        saturation[pixel] = sat;
+        sumL += l;
+        sumSat += sat;
+        histogram[Math.min(255, Math.round(l * 255))]++;
+        if (l > 0.965) highlights++;
+        if (l < 0.045) shadows++;
+        if (l < 0.16 && sat < 0.20) muddyShadows++;
+        const x = pixel % width, y = Math.floor(pixel / width);
+        if (x > width * 0.25 && x < width * 0.75 && y > height * 0.25 && y < height * 0.75) {
+          centerL += l; centerCount++;
+        } else { outerL += l; outerCount++; }
+        const rg = r - g;
+        const yb = 0.5 * (r + g) - b;
+        sumRg += rg; sumYb += yb; sumRg2 += rg * rg; sumYb2 += yb * yb;
+        if (pixel % 4 === 0) {
+          const key = `${r >> 4}-${g >> 4}-${b >> 4}`;
+          const bucket = colorBuckets.get(key) || { count: 0, r: 0, g: 0, b: 0 };
+          bucket.count++; bucket.r += r; bucket.g += g; bucket.b += b;
+          colorBuckets.set(key, bucket);
+        }
+        if (index % 32 === 0) {
+          hash ^= r; hash = Math.imul(hash, 16777619);
+          hash ^= g; hash = Math.imul(hash, 16777619);
+          hash ^= b; hash = Math.imul(hash, 16777619);
+        }
+      }
+
+      const meanL = sumL / total;
+      const meanSat = sumSat / total;
+      let varianceL = 0;
+      for (let index = 0; index < total; index++) varianceL += (luminance[index] - meanL) ** 2;
+      const stdL = Math.sqrt(varianceL / total);
+      const meanRg = sumRg / total, meanYb = sumYb / total;
+      const colorfulness = Math.sqrt(Math.max(0, sumRg2 / total - meanRg ** 2) + Math.max(0, sumYb2 / total - meanYb ** 2))
+        + 0.3 * Math.hypot(meanRg, meanYb);
+
+      const percentile = threshold => {
+        let accumulated = 0;
+        for (let index = 0; index < 256; index++) {
+          accumulated += histogram[index];
+          if (accumulated >= total * threshold) return index / 255;
+        }
+        return 1;
+      };
+      const dynamicRange = Math.max(0, percentile(0.95) - percentile(0.05));
+      const heatOutput = context.createImageData(width, height);
+      const heatData = heatOutput.data;
+      const quadrantEdges = [0, 0, 0, 0];
+      let edgeSum = 0, centerEdgeSum = 0, marginEdgeSum = 0, highFrequency = 0;
+      let attentionSum = 0, attentionX = 0, attentionY = 0;
+
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          const index = y * width + x;
+          const gx = -luminance[index - width - 1] + luminance[index - width + 1]
+            - 2 * luminance[index - 1] + 2 * luminance[index + 1]
+            - luminance[index + width - 1] + luminance[index + width + 1];
+          const gy = -luminance[index - width - 1] - 2 * luminance[index - width]
+            - luminance[index - width + 1] + luminance[index + width - 1]
+            + 2 * luminance[index + width] + luminance[index + width + 1];
+          const magnitude = clamp(Math.hypot(gx, gy) / 4);
+          const attention = clamp(magnitude * 1.3 + Math.abs(luminance[index] - meanL) * 0.35 + saturation[index] * 0.08);
+          edgeSum += magnitude;
+          attentionSum += attention;
+          attentionX += attention * (x / width);
+          attentionY += attention * (y / height);
+          const quadrant = (y >= height / 2 ? 2 : 0) + (x >= width / 2 ? 1 : 0);
+          quadrantEdges[quadrant] += magnitude;
+          if (x > width * 0.18 && x < width * 0.82 && y > height * 0.15 && y < height * 0.85) centerEdgeSum += magnitude;
+          if (x < width * 0.05 || x > width * 0.95 || y < height * 0.05 || y > height * 0.95) marginEdgeSum += magnitude;
+          if (magnitude > 0.18) highFrequency++;
+          const outputIndex = index * 4;
+          heatData[outputIndex] = Math.min(255, attention * 390);
+          heatData[outputIndex + 1] = Math.min(255, Math.max(0, (attention - 0.22) * 340));
+          heatData[outputIndex + 2] = Math.max(0, 180 - attention * 270);
+          heatData[outputIndex + 3] = Math.min(235, attention * 300 + 18);
+        }
+      }
+      context.putImageData(heatOutput, 0, 0);
+
+      const left = quadrantEdges[0] + quadrantEdges[2];
+      const right = quadrantEdges[1] + quadrantEdges[3];
+      const top = quadrantEdges[0] + quadrantEdges[1];
+      const bottom = quadrantEdges[2] + quadrantEdges[3];
+      const horizontalImbalance = edgeSum ? Math.abs(left - right) / edgeSum : 0;
+      const verticalImbalance = edgeSum ? Math.abs(top - bottom) / edgeSum : 0;
+      const centerX = attentionSum ? attentionX / attentionSum : 0.5;
+      const centerY = attentionSum ? attentionY / attentionSum : 0.5;
+      const thirdPoints = [[1/3, 1/3], [2/3, 1/3], [1/3, 2/3], [2/3, 2/3]];
+      const thirdDistance = Math.min(...thirdPoints.map(point => Math.hypot(centerX - point[0], centerY - point[1])));
+      const palette = [...colorBuckets.values()].sort((a, b) => b.count - a.count).slice(0, 6).map(bucket => ({
+        count: bucket.count,
+        hex: '#' + [bucket.r, bucket.g, bucket.b].map(value => Math.round(value / bucket.count).toString(16).padStart(2, '0')).join('').toUpperCase()
+      }));
+
+      return {
+        fingerprint: `${(hash >>> 0).toString(16)}_${source.width}x${source.height}`,
+        width, height, luminance,
+        meanL, meanSat, stdL, dynamicRange,
+        colorfulness: clamp(colorfulness / 70),
+        highlightRatio: highlights / total,
+        shadowRatio: shadows / total,
+        muddyShadowRatio: muddyShadows / total,
+        edgeDensity: highFrequency / total,
+        centerFocusRatio: edgeSum ? centerEdgeSum / edgeSum : 0.35,
+        safeAttention: edgeSum ? clamp(1 - marginEdgeSum / edgeSum) : 0.7,
+        horizontalImbalance, verticalImbalance,
+        balanceIndex: edgeSum ? clamp(1 - (horizontalImbalance + verticalImbalance) * 0.65) : 0.55,
+        thirdsAffinity: clamp(1 - thirdDistance / 0.42),
+        attentionX: centerX, attentionY: centerY,
+        leftShare: edgeSum ? left / edgeSum : 0.5,
+        topShare: edgeSum ? top / edgeSum : 0.5,
+        centerPeripheryContrast: Math.abs((centerL / Math.max(1, centerCount)) - (outerL / Math.max(1, outerCount))),
+        palette
+      };
+    }
+
+    function loadExternalScript(source, globalName) {
+      if (window[globalName]) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector(`script[src="${source}"]`);
+        if (existing) {
+          existing.addEventListener('load', resolve, { once: true });
+          existing.addEventListener('error', () => reject(new Error('Не удалось загрузить AI-модуль')), { once: true });
+          return;
+        }
+        const script = document.createElement('script');
+        const timer = setTimeout(() => reject(new Error('Тайм-аут загрузки AI-модуля')), 20000);
+        script.src = source;
+        script.async = true;
+        script.onload = () => { clearTimeout(timer); resolve(); };
+        script.onerror = () => { clearTimeout(timer); reject(new Error('Не удалось загрузить AI-модуль')); };
+        document.head.appendChild(script);
+      });
+    }
+
+    function withTimeout(promise, milliseconds) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Тайм-аут инициализации AI')), milliseconds))
+      ]);
+    }
+
+    function ensureAIEngine() {
+      if (aiEngine.status === 'ready' && (aiEngine.coco || aiEngine.face)) return Promise.resolve();
+      if (aiEngine.promise) return aiEngine.promise;
+      aiEngine.status = 'loading';
+      updateAIEngineUI();
+      aiEngine.promise = (async () => {
+        try {
+          await loadExternalScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js', 'tf');
+          try { await window.tf.setBackend('webgl'); } catch (_) { await window.tf.setBackend('cpu'); }
+          await window.tf.ready();
+          const libraries = await Promise.allSettled([
+            loadExternalScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js', 'cocoSsd'),
+            loadExternalScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.1.0/dist/blazeface.min.umd.js', 'blazeface')
+          ]);
+          const loaders = [];
+          if (libraries[0].status === 'fulfilled' && window.cocoSsd) {
+            loaders.push(withTimeout(window.cocoSsd.load({ base: 'lite_mobilenet_v2' }), 30000).then(model => { aiEngine.coco = model; }));
+          }
+          if (libraries[1].status === 'fulfilled' && window.blazeface) {
+            loaders.push(withTimeout(window.blazeface.load(), 30000).then(model => { aiEngine.face = model; }));
+          }
+          await Promise.allSettled(loaders);
+          if (!aiEngine.coco && !aiEngine.face) throw new Error('AI-модели недоступны');
+          aiEngine.status = 'ready';
+        } catch (_) {
+          aiEngine.status = 'fallback';
+        } finally {
+          updateAIEngineUI();
+          aiEngine.promise = null;
+        }
+      })();
+      return aiEngine.promise;
+    }
+
+    function normalizeDetection(box, sourceWidth, sourceHeight, label, confidence, kind, id) {
+      const x = clamp(box[0], 0, sourceWidth);
+      const y = clamp(box[1], 0, sourceHeight);
+      const width = clamp(box[2], 0, sourceWidth - x);
+      const height = clamp(box[3], 0, sourceHeight - y);
+      return { id, label, confidence, kind, bbox: [x, y, width, height] };
+    }
+
+    async function detectSceneObjects(fingerprint) {
+      if (detectionMemoryCache.has(fingerprint)) return detectionMemoryCache.get(fingerprint);
+      const source = document.getElementById('mainCanvas');
+      const tasks = [];
+      if (aiEngine.coco) {
+        tasks.push(aiEngine.coco.detect(source, 12, 0.45).then(predictions => predictions.map((prediction, index) =>
+          normalizeDetection(prediction.bbox, source.width, source.height,
+            OBJECT_LABELS[prediction.class] || 'объект', prediction.score, 'object', 'object-' + index)
+        )).catch(() => []));
+      }
+      if (aiEngine.face) {
+        tasks.push(aiEngine.face.estimateFaces(source, false, false, true).then(predictions => predictions.map((prediction, index) => {
+          const topLeft = prediction.topLeft;
+          const bottomRight = prediction.bottomRight;
+          const confidence = Array.isArray(prediction.probability) ? prediction.probability[0] : prediction.probability;
+          return normalizeDetection([topLeft[0], topLeft[1], bottomRight[0] - topLeft[0], bottomRight[1] - topLeft[1]],
+            source.width, source.height, 'лицо', confidence || 0, 'face', 'face-' + index);
+        }).filter(item => item.confidence >= 0.85)).catch(() => []));
+      }
+      const groups = await Promise.all(tasks);
+      const detections = groups.flat().filter(item => item.bbox[2] > source.width * 0.008 && item.bbox[3] > source.height * 0.008)
+        .sort((a, b) => (b.confidence * b.bbox[2] * b.bbox[3]) - (a.confidence * a.bbox[2] * a.bbox[3])).slice(0, 12);
+      if (aiEngine.status === 'ready') detectionMemoryCache.set(fingerprint, detections);
+      return detections;
+    }
+
+    function calculateSubjectContrast(features, detections) {
+      if (!detections.length) return clamp(features.centerPeripheryContrast * 3.2);
+      const source = document.getElementById('mainCanvas');
+      const largest = [...detections].sort((a, b) => b.bbox[2] * b.bbox[3] - a.bbox[2] * a.bbox[3])[0];
+      const sx = features.width / source.width, sy = features.height / source.height;
+      const box = [largest.bbox[0] * sx, largest.bbox[1] * sy, largest.bbox[2] * sx, largest.bbox[3] * sy];
+      const regionMean = (x, y, width, height) => {
+        const x1 = Math.max(0, Math.floor(x)), y1 = Math.max(0, Math.floor(y));
+        const x2 = Math.min(features.width, Math.ceil(x + width)), y2 = Math.min(features.height, Math.ceil(y + height));
+        let sum = 0, count = 0;
+        for (let row = y1; row < y2; row += 2) {
+          for (let column = x1; column < x2; column += 2) {
+            sum += features.luminance[row * features.width + column]; count++;
+          }
+        }
+        return { mean: sum / Math.max(1, count), count };
+      };
+      const inner = regionMean(box[0] + box[2] * 0.1, box[1] + box[3] * 0.1, box[2] * 0.8, box[3] * 0.8);
+      const outer = regionMean(box[0] - box[2] * 0.16, box[1] - box[3] * 0.16, box[2] * 1.32, box[3] * 1.32);
+      const ringCount = Math.max(1, outer.count - inner.count);
+      const ringMean = Math.max(0, (outer.mean * outer.count - inner.mean * inner.count) / ringCount);
+      return clamp(Math.abs(inner.mean - ringMean) * 3.4);
+    }
+
+    function calculateDeterministicScores(features) {
+      const clutterLimit = currentAuditMode === 'uiux' ? 0.24 : 0.17;
+      const clutterPenalty = Math.max(0, features.edgeDensity - clutterLimit) * 10;
+      const composition = clamp(3.4 + features.balanceIndex * 2.1 + features.thirdsAffinity * 1.5
+        + features.centerFocusRatio * 0.8 + features.safeAttention * 0.7 - clutterPenalty, 1.2, 9.8);
+      const light = clamp(3.3 + features.dynamicRange * 4.3 + features.stdL * 2.4
+        + features.subjectContrast * 1.2 - features.highlightRatio * 6 - Math.max(0, features.shadowRatio - 0.28) * 4, 1.2, 9.8);
+      const text = clamp(3.6 + features.dynamicRange * 3.8 + features.stdL * 2.2 + features.safeAttention * 0.8
+        - clutterPenalty * (currentAuditMode === 'uiux' ? 0.3 : 0.7), 1.2, 9.8);
+      const color = clamp(3.5 + features.dynamicRange * 2.5 + features.colorfulness * 1.7
+        + clamp(features.meanSat * 2, 0, 1.2) - features.highlightRatio * 3
+        - Math.max(0, features.meanSat - 0.62) * 4, 1.2, 9.8);
+      const scores = [composition, light, text, color].map(round1);
+      const weights = AUDIT_PROFILES[currentAuditMode].weights;
+      const finalScore = round1(scores.reduce((sum, score, index) => sum + score * weights[index], 0));
+      return { scores, finalScore };
+    }
+
+    function buildAIAnalysis(features, detections) {
+      const scored = calculateDeterministicScores(features);
+      const subjectContrast = features.advisorySubjectContrast ?? features.subjectContrast;
+      const scores = scored.scores;
+      const finalScore = scored.finalScore;
+
+      const source = document.getElementById('mainCanvas');
+      const canvasArea = Math.max(1, source.width * source.height);
+
+      // 1. Геометрия лиц, персонажей и объектов в кадре
+      const faces = detections.filter(item => item.kind === 'face');
+      const persons = detections.filter(item => item.label === 'человек');
+      const objects = detections.filter(item => item.kind !== 'face');
+      const uniqueObjects = [...new Set(objects.map(item => item.label))].slice(0, 5);
+
+      const largestFace = [...faces].sort((a, b) => (b.bbox[2] * b.bbox[3]) - (a.bbox[2] * a.bbox[3]))[0] || null;
+      const largestHero = [...detections].sort((a, b) => (b.bbox[2] * b.bbox[3]) - (a.bbox[2] * a.bbox[3]))[0] || null;
+
+      const faceAreaShare = largestFace ? (largestFace.bbox[2] * largestFace.bbox[3]) / canvasArea : 0;
+      const heroAreaShare = largestHero ? (largestHero.bbox[2] * largestHero.bbox[3]) / canvasArea : 0;
+
+      // Координаты главного героя и свободной зоны под текст/триггер
+      const heroCenterX = largestHero
+        ? (largestHero.bbox[0] + largestHero.bbox[2] * 0.5) / source.width
+        : features.attentionX;
+
+      const freeSide = heroCenterX < 0.48 ? 'в правой трети кадра' : heroCenterX > 0.52 ? 'в левой трети кадра' : 'в верхней трети кадра';
+
+      // 2. Попиксельный анализ ключевых зон (таймкод 14:28, лицо, текстовые плашки)
+      const measureBoxStats = (nx, ny, nw, nh) => {
+        const x1 = clamp(Math.floor(nx * features.width), 0, features.width - 1);
+        const y1 = clamp(Math.floor(ny * features.height), 0, features.height - 1);
+        const x2 = clamp(Math.ceil((nx + nw) * features.width), x1 + 1, features.width);
+        const y2 = clamp(Math.ceil((ny + nh) * features.height), y1 + 1, features.height);
+        let sumL = 0, sumSq = 0, edgeHits = 0, count = 0;
+        for (let y = y1; y < y2; y++) {
+          for (let x = x1; x < x2; x++) {
+            const idx = y * features.width + x;
+            const l = features.luminance[idx];
+            sumL += l;
+            sumSq += l * l;
+            if (x > 0 && y > 0 && Math.abs(l - features.luminance[idx - 1]) + Math.abs(l - features.luminance[idx - features.width]) > 0.22) {
+              edgeHits++;
+            }
+            count++;
+          }
+        }
+        const mean = sumL / Math.max(1, count);
+        const std = Math.sqrt(Math.max(0, sumSq / Math.max(1, count) - mean * mean));
+        return { mean, std, edgeDensity: edgeHits / Math.max(1, count) };
+      };
+
+      const timestampZone = measureBoxStats(0.78, 0.78, 0.19, 0.18);
+      const topBannerZone = measureBoxStats(0.06, 0.06, 0.88, 0.26);
+      const freeSideZone = heroCenterX < 0.5 ? measureBoxStats(0.52, 0.12, 0.42, 0.65) : measureBoxStats(0.06, 0.12, 0.42, 0.65);
+
+      const textSignal = Math.max(topBannerZone.edgeDensity, freeSideZone.edgeDensity);
+      const isTextlessStorytelling = currentAuditMode === 'thumbnail' && textSignal < 0.15 && (faces.length > 0 || persons.length > 0);
+
+      let faceStats = { mean: features.meanL, std: features.stdL };
+      if (largestFace) {
+        faceStats = measureBoxStats(
+          largestFace.bbox[0] / source.width,
+          largestFace.bbox[1] / source.height,
+          largestFace.bbox[2] / source.width,
+          largestFace.bbox[3] / source.height
+        );
+      }
+
+      const paletteHex = (features.palette || []).map(p => p.hex);
+      const primaryHex = paletteHex[0] || '#16171B';
+      const accentHex = paletteHex[1] || paletteHex[0] || '#D4FF33';
+      const thirdHex = paletteHex[2] || '#FFFFFF';
+
+      const horizontal = features.attentionX < 0.43 ? 'в левой трети' : features.attentionX > 0.57 ? 'в правой трети' : 'в центральной зоне';
+      const vertical = features.attentionY < 0.43 ? 'верхней половины' : features.attentionY > 0.57 ? 'нижней половины' : 'среднего плана';
+
+      const found = [];
+      if (faces.length) {
+        found.push(faces.length === 1
+          ? `крупный план лица (${pct(faceAreaShare)} площади кадра)`
+          : `лица в кадре: ${faces.length} (главное лицо — ${pct(faceAreaShare)} площади)`);
+      }
+      if (uniqueObjects.length) found.push(`объекты: ${uniqueObjects.join(', ')}`);
+
+      let summary = found.length
+        ? `Распознано: ${found.join(' • ')}. Фокус зрительского внимания сфокусирован ${horizontal} (${vertical}). `
+        : `По карте контуров и светотени главный центр притяжения расположен ${horizontal} (${vertical}). `;
+
+      if (currentAuditMode === 'thumbnail') {
+        summary += isTextlessStorytelling
+          ? `Формат: чистый визуальный сторителлинг (в стиле MrBeast) со ставкой на эмоцию и сюжетный объект без перегруза текстом.`
+          : `Формат: комбинированная обложка (сюжетный объект + графический/текстовый акцент).`;
+      }
+      const contextTitle = document.getElementById('auditContextTitle').value.trim();
+      if (contextTitle) summary += ` Учтён контекст: «${contextTitle}».`;
+
+      // --- КРИТЕРИЙ 1: КОМПОЗИЦИЯ, МАСШТАБ ГЕРОЯ И ИЕРАРХИЯ ---
+      let compositionText = '';
+      if (currentAuditMode === 'thumbnail') {
+        if (faces.length > 0 && faceAreaShare < 0.055) {
+          compositionText = `Главное лицо занимает всего ${pct(faceAreaShare)} кадра — в мобильной ленте (168×94px) мимика и взгляд потеряются. Увеличьте масштаб персонажа на 25–35% (до 10–18% площади холста) и поднимите линию глаз на верхнюю линию третей.`;
+        } else if (faces.length >= 3 || detections.length >= 6) {
+          compositionText = `В кадре конкурируют сразу несколько объектов (${detections.length} шт.). Чтобы взгляд считывал сюжет за 0.3 секунды, сделайте одного персонажа главным по масштабу (${pct(Math.max(heroAreaShare, 0.28))}), а второстепенные фигуры сгруппируйте и приглушите размытием (Gaussian Blur 3–5px).`;
+        } else if (features.horizontalImbalance > 0.30) {
+          const heavySide = features.leftShare > 0.5 ? 'Левая' : 'Правая';
+          compositionText = `${heavySide} часть кадра перетягивает ${pct(Math.max(features.leftShare, 1 - features.leftShare))} деталей. Сбалансируйте композицию: оставьте героя в текущей точке, а ${freeSide} используйте под крупный контрастный объект интриги или короткий триггер.`;
+        } else {
+          compositionText = `Отличный баланс масс (лево/право: ${pct(features.leftShare)} на ${pct(1 - features.leftShare)}) и крупность первого плана (${pct(Math.max(heroAreaShare, 0.22))}). Чтобы усилить удержание, направьте взгляд или жест персонажа прямо на главный объект интриги ${freeSide}.`;
+        }
+      } else {
+        compositionText = features.horizontalImbalance > 0.30
+          ? `Заметен перевес визуальной массы (${pct(features.leftShare)} слева / ${pct(1 - features.leftShare)} справа). Выровняйте отступы между блоками и увеличьте свободное пространство вокруг главного оффера.`
+          : `Сетка и распределение веса сбалансированы (разница сторон всего ${pct(features.horizontalImbalance)}). Первый экран считывается последовательно без визуального шума.`;
+      }
+
+      // --- КРИТЕРИЙ 2: СВЕТ, ОБЪЁМ И ОТДЕЛЕНИЕ ОТ ФОНА (RIM LIGHT) ---
+      let lightText = '';
+      if (features.highlightRatio > 0.055) {
+        lightText = `Жёсткие пересветы на ${pct(features.highlightRatio)} площади кадра «съедают» объём. Приберите яркость светлых участков (Highlights −15…−25) на лбу, щеках и бликах, чтобы вернуть живую текстуру кожи и деталей.`;
+      } else if (subjectContrast < 0.28) {
+        lightText = `Герой слабо отделён от заднего плана по тону (разница яркости всего ${pct(subjectContrast)}). Затемните фон непосредственно за спиной и плечами персонажа на 18–25% через мягкую радиальную виньетку и проведите жёсткий контурный свет (Rim Light 3–5px) в оттенке ${accentHex}.`;
+      } else if (largestFace && faceStats.std < 0.14) {
+        lightText = `Общий контраст кадра хороший (${pct(features.dynamicRange)}), но само лицо освещено слишком плоско. Усильте локальный объём на лице (Dodge & Burn): высветлите белки глаз, радужку и скулы на 10–12%, а теневую сторону лица слегка углубите.`;
+      } else {
+        lightText = `Широкий яркостный диапазон (${pct(features.dynamicRange)}) и чёткое тональное разделение планов. Для студийного «дорогого» объёма добавьте лёгкую воздушную дымку (Haze) между спиной героя и дальним фоном — это мгновенно даст 3D-глубину.`;
+      }
+
+      // --- КРИТЕРИЙ 3: ЧИТАЕМОСТЬ, ТЕКСТ И СЧИТЫВАЕМОСТЬ ЗА 0.3 СЕКУНДЫ ---
+      let textText = '';
+      if (isTextlessStorytelling) {
+        textText = `Обложка построена на чистом визуальном сторителлинге без текстового перегруза (приём MrBeast). Сюжет работает за счёт картинки, но если нужно повысить CTR на холодную аудиторию — добавьте короткий триггер из 1–2 слов или цифр (например, цену, таймер или стрелку) в свободную зону ${freeSide}.${timestampZone.edgeDensity > 0.16 ? ' Внимание: в правом нижнем углу есть важные детали, которые перекроет таймкод YouTube (14:28).' : ''}`;
+      } else if (features.edgeDensity > (currentAuditMode === 'uiux' ? 0.26 : 0.19)) {
+        textText = `Вокруг текста слишком много мелких контрастных деталей фона (плотность контуров ${pct(features.edgeDensity)}). Подложите под надпись мягкий тёмный градиент (${primaryHex} с непрозрачностью 60–75%) и замените размытую тень на плотную тёмную обводку с коротким жёстким смещением.`;
+      } else if (timestampZone.edgeDensity > 0.18 && currentAuditMode === 'thumbnail') {
+        textText = `В правом нижнем углу высокая плотность деталей (${pct(timestampZone.edgeDensity)}) — на YouTube эта зона намертво перекрывается плашкой времени ролика (14:28). Перенесите текст или важный предмет выше или в левую часть кадра.`;
+      } else {
+        textText = `Хороший запас локального контраста для считывания на лету. Следите, чтобы на превью было не более 1–3 крупных слов плотным гротеском: на экранах смартфонов длинные фразы сливаются в серую полосу.`;
+      }
+
+      // --- КРИТЕРИЙ 4: ЦВЕТОВАЯ ПСИХОЛОГИЯ, ПАЛИТРА И CTR ---
+      let colorText = '';
+      if (features.meanSat > 0.52) {
+        colorText = `Высокая общая насыщенность (${pct(features.meanSat)}, основные тона: ${primaryHex}, ${accentHex}, ${thirdHex}). Когда и фон, и герой одинаково «кричат» цветом, глаз теряет фокус. Приглушите насыщенность заднего плана (Saturation −15…−20%), оставив максимальную сочность только на лице и главном объекте.`;
+      } else if (features.meanSat < 0.16) {
+        colorText = `Сдержанная, почти монохромная палитра (${primaryHex} / ${accentHex}). В ленте среди ярких обложек такой кадр может провалиться: введите один чистый цветовой акцент (жёлтый, лаймовый #D4FF33 или ярко-красный) на ключевой детали сюжета.`;
+      } else {
+        colorText = `Гармоничная связка доминирующих оттенков (${primaryHex}, ${accentHex}, ${thirdHex}) при средней насыщенности ${pct(features.meanSat)}. Чтобы усилить кликабельность, используйте температурный контраст: тёплый свет на лице и герое против более холодного или приглушённого фона.`;
+      }
+
+      const critique = [compositionText, lightText, textText, colorText].map((text, index) =>
+        `${AUDIT_PROFILES[currentAuditMode].labels[index]} (${scores[index]}/10): ${text}`
+      );
+
+      // --- КОНКРЕТНЫЙ ПОШАГОВЫЙ ПЛАН ДОРАБОТКИ (ВСЕГДА 4 ТОЧНЫХ ШАГА) ---
+      const steps = [];
+      const addStep = (priority, text) => steps.push({ priority, text });
+
+      if (currentAuditMode === 'thumbnail') {
+        if (faces.length > 0 && faceAreaShare < 0.065) {
+          addStep(15, `Укрупните главного героя и лицо на 20–30%: в мобильной ленте YouTube эмоции глаз и рта должны мгновенно считываться даже при размере превью 168×94 пикселя.`);
+        } else if (faces.length > 0) {
+          addStep(11, `Проработайте акцент на лице (Dodge & Burn): слегка высветлите глаза и блики на 10–15% и добавьте резкости (High Pass 1.5–2px) только на глаза, брови и мимику.`);
+        } else {
+          addStep(12, `Выделите один главный объект-магнит в точке пересечения третей, увеличив его масштаб на 20% относительно второстепенных предметов.`);
+        }
+
+        if (subjectContrast < 0.34 || features.meanSat > 0.45) {
+          addStep(14, `Отделите первый план от фона: убавьте насыщенность заднего плана на 15–20%, размойте дальний план (Gaussian Blur 3–4px) и нарисуйте тонкий контурный свет (Rim Light ${accentHex}) по силуэту героя.`);
+        } else {
+          addStep(10, `Усильте 3D-глубину кадра: добавьте между спиной персонажа и фоном мягкое световое пятно (свечение в тоне ${accentHex} или белый туман на 20–25% непрозрачности).`);
+        }
+
+        if (isTextlessStorytelling) {
+          addStep(13, `Усильте визуальную интригу (Curiosity Gap): поскольку обложка без текста, добавьте ${freeSide} один предельно понятный визуальный триггер (контрастный предмет сравнения, стрелку или короткую плашку из 1–2 слов/цифр).`);
+        } else {
+          addStep(13, `Повысьте читаемость заголовка: оставьте максимум 2–3 слова, поставьте под них мягкое затемнение (${primaryHex}) и проверьте, чтобы правый нижний угол оставался чистым под таймкод 14:28.`);
+        }
+
+        if (features.highlightRatio > 0.05) {
+          addStep(12, `Уберите пересветы (${pct(features.highlightRatio)} кадра): приглушите самые яркие белые пятна на коже и фоне через кривые (Curves), чтобы превью не выглядело «выжженным».`);
+        } else {
+          addStep(9, `Финальная проверка перед выкладкой: переключите холст выше в режим «Тест прищура» и «Ч/Б Тон» — силуэт героя и главный объект должны читаться отдельно от фона за 0.3 секунды.`);
+        }
+      } else {
+        addStep(14, `Усильте визуальную иерархию первого экрана: сделайте главный заголовок и целевую кнопку (CTA в цвете ${accentHex}) самыми контрастными точками макета.`);
+        addStep(12, `Разгрузите плотные участки (текущая плотность деталей — ${pct(features.edgeDensity)}): увеличьте внутренние отступы (padding) карточек минимум на 25–30%.`);
+        addStep(11, `Выровняйте баланс левой и правой половин (${pct(features.leftShare)} / ${pct(1 - features.leftShare)}) за счёт свободного пространства (воздуха) вокруг ключевого контента.`);
+        addStep(9, `Проверьте все текстовые пары в «Калькуляторе контраста» (раздел «Материалы»), чтобы мелкий и основной текст держали планку не ниже 4.5:1.`);
+      }
+
+      steps.sort((a, b) => b.priority - a.priority);
+      const actionSteps = steps.slice(0, 4).map(item => item.text);
+
+      const verdict = finalScore >= 8.5 ? 'Сильная упаковка • высокий потенциал CTR'
+        : finalScore >= 7.2 ? 'Хорошая база • точечно усильте первый план'
+          : finalScore >= 5.5 ? 'Рабочий черновик • выделите главный фокус'
+            : 'Требует доработки • пересоберите иерархию и контраст';
+
+      return {
+        is_design_layout: true,
+        detected_type: AUDIT_PROFILES[currentAuditMode].type,
+        summary,
+        verdict_title: verdict,
+        sub_scores: scores,
+        final_score: finalScore,
+        critique,
+        steps: actionSteps,
+        detections,
+        engine_label: aiEngine.status === 'ready' ? `Локальный AI • объектов: ${detections.length}` : 'Глубокий попиксельный анализ',
+        metrics: {
+          leftShare: features.leftShare,
+          topShare: features.topShare,
+          highlightRatio: features.highlightRatio,
+          shadowRatio: features.shadowRatio,
+          palette: features.palette
+        }
+      };
+    }
+
+    async function runFullDesignAudit() {
+      if (!hasLoadedImage) return;
+      const runId = ++activeAuditRun;
+      const scanOverlay = document.getElementById('scanOverlay');
+      scanOverlay.classList.add('active');
+      setScoreUI(0, [0, 0, 0, 0], true);
+      try {
+        updateScanStage(1, 'Читаем структуру изображения…', 'Вычисляем отпечаток, квадранты, свет, цвет и контуры');
+        await nextFrame();
+        const features = computeVisualFeaturesAndHeatmap();
+        const contextKey = document.getElementById('auditContextTitle').value.trim();
+        const nicheKey = document.getElementById('auditNicheSelect').value;
+        const cacheKey = [AUDIT_ENGINE_VERSION, features.fingerprint, currentAuditMode, contextKey, nicheKey].join('_');
+        if (auditMemoryCache.has(cacheKey)) {
+          const cached = auditMemoryCache.get(cacheKey);
+          currentAuditResult = cached;
+          currentDetections = cached.detections || [];
+          renderAuditOutput(cached);
+          return;
+        }
+
+        updateScanStage(2, 'Запускаем локальный AI…', 'Подготовка распознавания лиц и главных объектов');
+        await ensureAIEngine();
+        if (runId !== activeAuditRun) return;
+        updateScanStage(3, 'Ищем объекты и зоны внимания…', 'Сопоставляем найденные объекты с фоном и композицией');
+        const detections = await detectSceneObjects(features.fingerprint);
+        if (runId !== activeAuditRun) return;
+        features.subjectContrast = clamp(features.centerPeripheryContrast * 3.2);
+        features.advisorySubjectContrast = calculateSubjectContrast(features, detections);
+        updateScanStage(4, 'Формируем персональный разбор…', 'Связываем слабые метрики с конкретными исправлениями');
+        const result = buildAIAnalysis(features, detections);
+        auditMemoryCache.set(cacheKey, result);
+        currentAuditResult = result;
+        currentDetections = detections;
+        renderAuditOutput(result);
+      } catch (_) {
+        document.getElementById('verdictTitle').textContent = 'Не удалось завершить анализ';
+        document.getElementById('verdictSub').textContent = 'Попробуйте другое изображение или повторите проверку';
+        showToast('Ошибка анализа. Проверьте изображение и повторите попытку');
+      } finally {
+        if (runId === activeAuditRun) scanOverlay.classList.remove('active');
+      }
+    }
+
+    function setScoreUI(average, subscores, isReset) {
+      document.getElementById('scoreNum').textContent = average.toFixed(1);
+      const arc = document.getElementById('gaugeArc');
+      const offset = 239 - (clamp(average, 0, 10) / 10) * 239;
+      arc.style.strokeDashoffset = isReset ? 239 : offset;
+      arc.style.stroke = average < 3.5 ? '#ff5252' : average >= 7.5 ? '#d4ff33' : '#ffffff';
+      ['subVal1', 'subVal2', 'subVal3', 'subVal4'].forEach((id, index) => {
+        document.getElementById(id).textContent = (subscores[index] || 0).toFixed(1);
+      });
+    }
+
+    function drawAnalysisOverlay(detections) {
+      const source = document.getElementById('mainCanvas');
+      const canvas = document.getElementById('overlayCanvas');
+      if (canvas.width !== source.width) canvas.width = source.width;
+      if (canvas.height !== source.height) canvas.height = source.height;
+      const context = canvas.getContext('2d');
+      const width = canvas.width, height = canvas.height;
+      context.clearRect(0, 0, width, height);
+      if (!hasLoadedImage) return;
+      const lineWidth = Math.max(1.5, width / 500);
+      context.lineWidth = lineWidth;
+      context.setLineDash([]);
+      if (overlayState.thirds) {
+        context.strokeStyle = 'rgba(255,255,255,0.65)';
+        context.beginPath();
+        [1/3, 2/3].forEach(part => {
+          context.moveTo(width * part, 0); context.lineTo(width * part, height);
+          context.moveTo(0, height * part); context.lineTo(width, height * part);
+        });
+        context.stroke();
+      }
+      if (overlayState.safe) {
+        context.setLineDash([lineWidth * 4, lineWidth * 3]);
+        context.strokeStyle = 'rgba(212,255,51,0.85)';
+        context.strokeRect(width * 0.05, height * 0.05, width * 0.90, height * 0.90);
+        context.strokeStyle = 'rgba(255,255,255,0.45)';
+        context.strokeRect(width * 0.10, height * 0.10, width * 0.80, height * 0.80);
+        if (currentAuditMode === 'thumbnail') {
+          context.strokeStyle = 'rgba(255,82,82,0.85)';
+          context.strokeRect(width * 0.80, height * 0.82, width * 0.15, height * 0.12);
+        }
+        context.setLineDash([]);
+      }
+      if (!overlayState.objects) return;
+      const fontSize = Math.max(12, Math.round(width / 58));
+      context.font = `600 ${fontSize}px sans-serif`;
+      context.textBaseline = 'middle';
+      const occupiedLabels = [];
+      detections.forEach((detection, index) => {
+        const [x, y, boxWidth, boxHeight] = detection.bbox;
+        const color = detection.kind === 'face' ? '#d4ff33' : '#ffffff';
+        context.strokeStyle = color;
+        context.lineWidth = Math.max(2, width / 430);
+        context.setLineDash([lineWidth * 7, lineWidth * 3]);
+        context.strokeRect(x, y, boxWidth, boxHeight);
+        context.setLineDash([]);
+        const corner = Math.max(8, width / 45);
+        context.beginPath();
+        context.moveTo(x, y + corner); context.lineTo(x, y); context.lineTo(x + corner, y);
+        context.moveTo(x + boxWidth - corner, y + boxHeight); context.lineTo(x + boxWidth, y + boxHeight); context.lineTo(x + boxWidth, y + boxHeight - corner);
+        context.stroke();
+        const label = `${detection.label.toUpperCase()} ${Math.round(detection.confidence * 100)}%`;
+        const labelWidth = context.measureText(label).width + fontSize;
+        const labelHeight = fontSize * 1.65;
+        const labelX = clamp(x, 0, Math.max(0, width - labelWidth));
+        let labelY = Math.max(0, y - fontSize * 1.8);
+        let attempts = 0;
+        while (occupiedLabels.some(area => labelX < area.x + area.width && labelX + labelWidth > area.x
+          && labelY < area.y + area.height && labelY + labelHeight > area.y) && attempts < detections.length) {
+          labelY += labelHeight + 3;
+          attempts++;
+        }
+        occupiedLabels.push({ x: labelX, y: labelY, width: labelWidth, height: labelHeight });
+        context.fillStyle = color;
+        context.fillRect(labelX, labelY, labelWidth, labelHeight);
+        context.fillStyle = '#121317';
+        context.fillText(label, labelX + fontSize * 0.5, labelY + fontSize * 0.83);
+      });
+    }
+
+    function renderAuditOutput(result) {
+      const subscores = result.sub_scores || [0, 0, 0, 0];
+      setScoreUI(result.final_score, subscores, false);
+      const badge = document.getElementById('detectedTypeBadge');
+      badge.textContent = result.detected_type;
+      badge.style.color = 'var(--lime)';
+      document.getElementById('recognizedPlotText').textContent = result.summary;
+      document.getElementById('verdictTitle').textContent = result.verdict_title;
+      document.getElementById('verdictSub').textContent = `${result.engine_label} • одинаковый файл получает тот же балл`;
+      document.getElementById('critiqueList').innerHTML = (result.critique || []).map(item => `<div class="tip-card">${item}</div>`).join('');
+      document.getElementById('actionPlanWrap').style.display = 'block';
+      document.getElementById('actionStepsList').innerHTML = (result.steps || []).map((step, index) =>
+        `<div><strong style="color:var(--lime);font-family:var(--font-mono);">ШАГ ${index + 1}:</strong> ${step}</div>`
+      ).join('');
+
+      const detections = result.detections || [];
+      document.getElementById('detectionList').innerHTML = detections.length
+        ? detections.slice(0, 7).map(item => `<span class="detection-chip ${item.kind === 'face' ? 'face' : ''}">${item.label} · ${Math.round(item.confidence * 100)}%</span>`).join('')
+        : '<span class="detection-chip">Уверенно распознанных объектов нет</span>';
+      const palette = result.metrics.palette || [];
+      document.getElementById('paletteStrip').innerHTML = palette.map(color =>
+        `<span style="background:${color.hex};flex-grow:${color.count}" title="${color.hex}"></span>`
+      ).join('');
+      document.getElementById('diagnosticGrid').hidden = false;
+      document.getElementById('metricHorizontal').textContent = `${pct(result.metrics.leftShare)} / ${pct(1 - result.metrics.leftShare)}`;
+      document.getElementById('metricVertical').textContent = `${pct(result.metrics.topShare)} / ${pct(1 - result.metrics.topShare)}`;
+      document.getElementById('metricHighlights').textContent = pct(result.metrics.highlightRatio);
+      document.getElementById('metricShadows').textContent = pct(result.metrics.shadowRatio);
+      drawAnalysisOverlay(detections);
+    }
+
+    /* ==========================================================================
+       МОДАЛЬНЫЕ ОКНА, ЧАТ ПОДДЕРЖКИ И БУФЕР ОБМЕНА
+       ========================================================================== */
+    const MODAL_CONTENT = {
+      fonts: { tag: 'МАТЕРИАЛЫ • ШРИФТЫ', title: 'Шрифты для заголовков и интерфейсов', html: '<p>Используйте крупные плотные шрифты (Impact, Druk, Unbounded, Inter ExtraBold) для коротких фраз из 1–3 слов на обложках и спокойные читаемые шрифты (Inter) для сайтов. Не ставьте тонкий шрифт поверх пёстрого фона.</p>' },
+      palettes: { tag: 'МАТЕРИАЛЫ • ПАЛИТРЫ', title: 'Контрастные цветовые сочетания', html: '<p>Лучше всего работают контрастные пары: тёплый яркий главный объект (жёлтый, лаймовый, оранжевый) на тёмном графитовом или глубоком синем фоне (#16171B).</p>' },
+      textures: { tag: 'МАТЕРИАЛЫ • ТЕКСТУРЫ И СВЕТ', title: 'Контурный свет и глубина кадра', html: '<p>Чтобы главный герой не выглядел плоско, добавьте мягкое свечение позади его фигуры и прорисуйте яркий контурный свет по краям плеч и головы.</p>' },
+      psd: { tag: 'МАТЕРИАЛЫ • ШАБЛОНЫ', title: 'Понятная структура слоёв в проекте', html: '<pre class="code-box" style="margin-top:8px;">1. Финальная цветокоррекция\n2. Текст и заголовки\n3. Главный герой + контурный свет\n4. Дымка и свечение за героем\n5. Размытый задний план</pre>' },
+      viral: { tag: 'ВДОХНОВЕНИЕ • РАЗБОР РАБОТ', title: 'Как удержать внимание зрителя', html: '<p>Зритель смотрит на обложку в таком порядке: 1) Крупное лицо с эмоцией или необычный предмет, 2) Деталь, вызывающая вопрос, 3) Короткий крупный текст, дополняющий тему.</p>' },
+      comp: { tag: 'ВДОХНОВЕНИЕ • КОМПОЗИЦИЯ', title: 'Расположение объектов в кадре', html: '<p>Размещайте главный объект чуть левее или правее центра по правилу третей, оставляя свободное пространство для крупного текста.</p>' },
+      trends: { tag: 'ВДОХНОВЕНИЕ • ТРЕНДЫ', title: 'Современное оформление', html: '<p>Сейчас лучше всего работает чистый объёмный свет, естественные цвета без перебора с резкостью и аккуратные карточки с воздухом.</p>' },
+      guide: { tag: 'ОБУЧЕНИЕ • ГАЙД', title: 'Как проверять свою работу перед публикацией', html: '<p>Всегда проверяйте макет в чёрно-белом режиме (чтобы убедиться, что герой не сливается с фоном) и уменьшайте масштаб до размера иконки телефона.</p>' },
+      mistakes: { tag: 'ОБУЧЕНИЕ • ОШИБКИ', title: '5 частых ошибок новичков', html: '<p>1. Больше 3 разных объектов в кадре. 2. Текст сливается с фоном. 3. Грязные чёрные тени вокруг букв. 4. Важная надпись в правом нижнем углу под временем видео. 5. Слишком длинный текст на обложке.</p>' },
+      specs: { tag: 'ОБУЧЕНИЕ • ПАРАМЕТРЫ', title: 'Технические требования к файлам', html: '<p>Обложки видео: 1920×1080 пикселей (16:9), формат PNG или JPG до 2 МБ. Макеты сайтов: ширина экрана 1440 пикселей для компьютера и 375 пикселей для телефона.</p>' },
+      ad: { tag: 'РЕКЛАМА НА САЙТЕ', title: 'Размещение рекламы в CTRL.PNG', html: '<p>Вы можете разместить баннер своего проекта, курса или набора материалов. Напишите нам в окно поддержки в правом нижнем углу.</p>' }
+    };
+
+    let modalReturnFocus = null;
+    function openModal(id) {
+      const m = MODAL_CONTENT[id];
+      if (!m) return;
+      modalReturnFocus = document.activeElement;
+      document.getElementById('modalTag').textContent = m.tag;
+      document.getElementById('modalTitle').textContent = m.title;
+      document.getElementById('modalBody').innerHTML = m.html;
+      document.getElementById('studioModal').classList.add('open');
+      document.getElementById('modalCloseBtn').focus();
+    }
+    function closeModal() {
+      document.getElementById('studioModal').classList.remove('open');
+      if (modalReturnFocus && document.contains(modalReturnFocus)) modalReturnFocus.focus();
+    }
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Escape') return;
+      closeModal();
+      document.getElementById('supportBox').classList.remove('open');
+    });
+
+    function toggleSupport() {
+      document.getElementById('supportBox').classList.toggle('open');
+    }
+
+    function sendSupportMsg() {
+      const input = document.getElementById('chatInput');
+      const value = input.value.trim();
+      if (!value) return;
+      const log = document.getElementById('chatLog');
+      const userBubble = document.createElement('div');
+      userBubble.className = 'bubble user';
+      userBubble.textContent = value;
+      log.appendChild(userBubble);
+      input.value = '';
+      let answer = 'Откройте «Анализатор» для разбора изображения, а точный контраст двух цветов можно проверить в разделе «Материалы».';
+      if (/контраст|читаем|wcag/i.test(value)) {
+        answer = 'Для обычного текста нужен контраст не ниже 4.5:1, для крупного заголовка — не ниже 3:1. В «Материалах» можно сразу проверить свою пару цветов.';
+      } else if (/тз|задани/i.test(value)) {
+        answer = 'В разделе «Обучение» заполните название, формат и задачу проекта — генератор сразу соберёт готовое техническое задание.';
+      } else if (/анализ|балл|оценк|результат/i.test(value) && currentAuditResult) {
+        answer = `Последний разбор: ${currentAuditResult.final_score}/10 — ${currentAuditResult.verdict_title}. Начните с первого шага в блоке советов: он выбран по самой слабой метрике этого изображения.`;
+      } else if (/анализ|балл|оценк|результат/i.test(value)) {
+        answer = 'Загрузите макет в «Анализаторе». Локальный AI найдёт лица и объекты, а затем оценит композицию, свет, читаемость и цвет без отправки файла на сервер.';
+      }
+      setTimeout(() => {
+        const botBubble = document.createElement('div');
+        botBubble.className = 'bubble bot';
+        botBubble.textContent = answer;
+        log.appendChild(botBubble);
+        log.scrollTop = log.scrollHeight;
+      }, 250);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function copyText(str) {
+      const ta = document.createElement('textarea');
+      ta.value = str;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const t = document.getElementById('toastBox');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCards();
+      syncWcag('picker');
+      updateFontBuilder();
+      buildBriefDoc();
+    });
+  </script>
+</body>
+</html>
