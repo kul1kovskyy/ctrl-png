@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CTRL.PNG — Платформа и инструменты для дизайнеров</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316171b'/%3E%3Cpath d='M43 20a16 16 0 1 0 0 24' fill='none' stroke='%23d4ff33' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
   <style>
     /* ==========================================================================
        1. ДИЗАЙН-ТОКЕНЫ (ГРАФИТОВО-ТИТАНОВАЯ ПАЛИТРА)
@@ -634,7 +635,7 @@
       align-items: center;
       justify-content: center;
     }
-    #mainCanvas, #heatCanvas {
+    #mainCanvas, #heatCanvas, #overlayCanvas {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -642,7 +643,99 @@
       object-fit: contain;
       transition: filter 0.22s ease, opacity 0.22s ease;
     }
-    #heatCanvas { opacity: 0; pointer-events: none; }
+    #heatCanvas, #overlayCanvas { pointer-events: none; }
+    #heatCanvas { opacity: 0; }
+    #overlayCanvas { z-index: 3; }
+    .analysis-switch-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .analysis-switch-bar .field-label { margin: 0 auto 0 0; }
+    .overlay-btn[aria-pressed="true"] {
+      color: var(--lime);
+      border-color: rgba(212,255,51,0.45);
+      background: var(--lime-soft);
+    }
+    .engine-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 15px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      background: var(--bg-elevated);
+    }
+    .engine-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .engine-state::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .engine-state.loading::before { background: var(--warning); box-shadow: 0 0 10px rgba(245,158,11,0.55); }
+    .engine-state.ready::before { background: var(--lime); box-shadow: 0 0 10px rgba(212,255,51,0.55); }
+    .engine-state.fallback::before { background: var(--warning); }
+    .engine-note { color: var(--text-muted); font-size: 0.72rem; text-align: right; }
+    .diagnostic-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .diagnostic-cell {
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      background: rgba(255,255,255,0.018);
+    }
+    .diagnostic-cell span { display: block; color: var(--text-muted); font-size: 0.68rem; margin-bottom: 3px; }
+    .diagnostic-cell strong { font-family: var(--font-mono); font-size: 0.78rem; font-weight: 500; }
+    .palette-strip {
+      display: flex;
+      height: 12px;
+      overflow: hidden;
+      border-radius: 5px;
+      margin-top: 14px;
+      background: var(--bg-base);
+    }
+    .palette-strip span { min-width: 4px; }
+    .detection-list {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .detection-chip {
+      padding: 4px 8px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      color: var(--text-sec);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+    }
+    .detection-chip.face { color: var(--lime); border-color: rgba(212,255,51,0.35); }
+    .audit-error { color: #f87171 !important; }
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [onclick]:focus-visible {
+      outline: 2px solid var(--lime);
+      outline-offset: 3px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+    }
     .dropzone {
       position: absolute;
       inset: 0;
@@ -859,7 +952,44 @@
       .grid-2, .workspace-grid, .context-bar, .mode-tabs { grid-template-columns: 1fr; }
       .card.wide { grid-column: span 1; grid-template-columns: 1fr; }
       .player-stage { border-right: none; border-bottom: 1px solid var(--border-subtle); }
-      .capsule-nav { flex-wrap: wrap; justify-content: center; border-radius: 20px; }
+      .header-wrap { top: 8px; padding: 0 12px; }
+      .capsule-nav {
+        width: min(100%, 560px);
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 6px;
+        padding: 8px 10px;
+        border-radius: 20px;
+      }
+      .brand-logo { grid-column: 1; grid-row: 1; justify-self: start; }
+      .grid-btn { grid-column: 2; grid-row: 1; min-height: 40px; }
+      .nav-links {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: 100%;
+      }
+      .nav-btn { justify-content: center; padding: 8px 5px; font-size: 0.74rem; min-height: 38px; }
+      .nav-btn .badge-ai { display: none; }
+      .spa-page { padding-top: 172px; }
+    }
+    @media (max-width: 600px) {
+      .container { padding: 0 16px; }
+      .spa-page { padding-bottom: 64px; }
+      .mvp-panel { padding: 20px; }
+      .grid-2 { gap: 16px; }
+      .card { padding: 24px; }
+      .section-block, .mvp-block { margin-top: 64px; }
+      .section-title { font-size: 1.25rem; }
+      .section-head { align-items: flex-start; }
+      .view-btn, .mode-btn { min-height: 44px; }
+      .analysis-switch-bar .field-label { width: 100%; }
+      .engine-line { align-items: flex-start; flex-direction: column; }
+      .engine-note { text-align: left; }
+      .score-head { align-items: flex-start; }
+      .support-fab { right: 16px; bottom: 16px; }
+      .video-placeholder-inner { padding: 24px 18px; }
     }
   </style>
 </head>
@@ -872,7 +1002,7 @@
        ========================================================================== -->
   <header class="header-wrap">
     <nav class="capsule-nav">
-      <div class="brand-logo" onclick="switchPage('home')" title="CTRL.PNG — На главную">
+      <div class="brand-logo" role="button" tabindex="0" onclick="switchPage('home')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchPage('home')}" title="CTRL.PNG — На главную">
         <svg viewBox="0 0 116 40" fill="none" xmlns="http://www.w3.org/2000/svg">
           <line x1="7" y1="13" x2="39" y2="5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
           <circle cx="7" cy="13" r="4" fill="#ffffff"/>
@@ -1177,7 +1307,7 @@
   <main id="page-analyzer" class="spa-page">
     <div class="container">
       <div class="section-head">
-        <div class="section-title">Анализатор превью и дизайн-макетов <span class="pill-tag">ТОЧНАЯ ОЦЕНКА</span></div>
+        <div class="section-title">Анализатор превью и дизайн-макетов <span class="pill-tag">ЛОКАЛЬНЫЙ AI</span></div>
         <button class="btn-ghost" style="padding:8px 16px;font-size:0.8rem;" onclick="loadDemoDesignSample()">Загрузить пример макета</button>
       </div>
 
@@ -1190,8 +1320,8 @@
 
       <!-- Контекстная строка -->
       <div class="context-bar">
-        <input type="text" id="auditContextTitle" class="studio-input" placeholder="Необязательно: укажите название ролика или тему проекта...">
-        <select id="auditNicheSelect" class="studio-select">
+        <input type="text" id="auditContextTitle" class="studio-input" placeholder="Необязательно: укажите название ролика или тему проекта..." onchange="if(hasLoadedImage)runFullDesignAudit()">
+        <select id="auditNicheSelect" class="studio-select" onchange="if(hasLoadedImage)runFullDesignAudit()">
           <option value="Универсальный дизайн">Тема: Автоопределение</option>
           <option value="Игры и развлечения">Тема: Игры и развлечения</option>
           <option value="Сайты и приложения">Тема: Сайты и сервисы</option>
@@ -1212,16 +1342,24 @@
             <button class="view-btn" id="vBtnCtx" onclick="setCanvasView('ctx')">Как в ленте</button>
           </div>
 
+          <div class="analysis-switch-bar">
+            <span class="field-label">ТЕХНИЧЕСКИЕ СЛОИ</span>
+            <button class="view-btn overlay-btn" id="overlayObjectsBtn" aria-pressed="true" onclick="toggleOverlay('objects')">AI-объекты</button>
+            <button class="view-btn overlay-btn" id="overlayThirdsBtn" aria-pressed="false" onclick="toggleOverlay('thirds')">Правило третей</button>
+            <button class="view-btn overlay-btn" id="overlaySafeBtn" aria-pressed="false" onclick="toggleOverlay('safe')">Безопасные зоны</button>
+          </div>
+
           <div class="viewport-box" id="viewportBox">
             <canvas id="mainCanvas" width="800" height="450"></canvas>
             <canvas id="heatCanvas" width="420" height="236"></canvas>
+            <canvas id="overlayCanvas" width="800" height="450"></canvas>
 
             <div class="context-frame" id="contextFrame">
               <span style="font-size:0.78rem;font-weight:600;background:rgba(0,0,0,0.75);padding:4px 10px;border-radius:6px;">Предпросмотр в ленте</span>
               <span style="font-family:var(--font-mono);font-size:0.74rem;background:#000;padding:3px 7px;border-radius:4px;">14:28</span>
             </div>
 
-            <div class="dropzone" id="dropzoneOverlay" onclick="document.getElementById('fileInput').click()">
+            <div class="dropzone" id="dropzoneOverlay" role="button" tabindex="0" onclick="document.getElementById('fileInput').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('fileInput').click()}">
               <div class="icon-box" style="margin-bottom:14px;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 16V4m0 0L8 8m4-4l4 4M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2"/></svg>
               </div>
@@ -1237,14 +1375,27 @@
             </div>
           </div>
 
+          <div class="engine-line">
+            <span class="engine-state" id="aiEngineState">AI запустится при анализе</span>
+            <span class="engine-note" id="aiEngineNote">Изображение остаётся в вашем браузере</span>
+          </div>
+
           <div style="padding:16px 18px;border-radius:14px;background:var(--bg-elevated);border:1px solid var(--border-subtle);">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:10px;flex-wrap:wrap;">
               <span class="field-label" style="margin:0;">ЧТО НА ИЗОБРАЖЕНИИ</span>
               <span class="pill-tag" id="detectedTypeBadge">ОЖИДАНИЕ ФАЙЛА</span>
             </div>
             <p id="recognizedPlotText" style="font-size:0.86rem;color:var(--text-sec);">
-              Загрузите свою работу или нажмите «Загрузить пример макета» выше, чтобы получить точную оценку и список советов по улучшению.
+              Загрузите свою работу или нажмите «Загрузить пример макета» выше. AI найдёт лица и объекты, а затем разберёт композицию, свет, читаемость и цвет.
             </p>
+            <div class="detection-list" id="detectionList" aria-live="polite"></div>
+            <div class="palette-strip" id="paletteStrip" aria-label="Распределение основных цветов"></div>
+            <div class="diagnostic-grid" id="diagnosticGrid" hidden>
+              <div class="diagnostic-cell"><span>БАЛАНС ЛЕВО / ПРАВО</span><strong id="metricHorizontal">—</strong></div>
+              <div class="diagnostic-cell"><span>БАЛАНС ВЕРХ / НИЗ</span><strong id="metricVertical">—</strong></div>
+              <div class="diagnostic-cell"><span>ПЕРЕСВЕТЫ</span><strong id="metricHighlights">—</strong></div>
+              <div class="diagnostic-cell"><span>ГЛУБОКИЕ ТЕНИ</span><strong id="metricShadows">—</strong></div>
+            </div>
           </div>
         </div>
 
@@ -1288,11 +1439,11 @@
   </main>
 
   <!-- Модальное окно для карточек и рекламы -->
-  <div class="modal-backdrop" id="studioModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-backdrop" id="studioModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" onclick="if(event.target===this)closeModal()">
     <div class="modal-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
         <span class="pill-tag" id="modalTag">РАЗДЕЛ</span>
-        <button class="btn-ghost" style="padding:6px 12px;font-size:0.78rem;" onclick="closeModal()">Закрыть ✕</button>
+        <button class="btn-ghost" id="modalCloseBtn" style="padding:6px 12px;font-size:0.78rem;" onclick="closeModal()">Закрыть ✕</button>
       </div>
       <h3 id="modalTitle" style="font-size:1.45rem;margin-bottom:10px;"></h3>
       <div id="modalBody" style="color:var(--text-sec);font-size:0.92rem;line-height:1.6;"></div>
@@ -1321,10 +1472,10 @@
     <div class="container" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
       <span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-sec);">CTRL.PNG © 2026 — ВСЕ ИНСТРУМЕНТЫ ДИЗАЙНЕРА В ОДНОМ МЕСТЕ</span>
       <div style="display:flex;gap:18px;font-size:0.84rem;color:var(--text-sec);">
-        <a href="#materials" onclick="switchPage('materials');return false;">Материалы</a>
-        <a href="#inspiration" onclick="switchPage('inspiration');return false;">Вдохновение</a>
-        <a href="#education" onclick="switchPage('education');return false;">Обучение</a>
-        <a href="#analyzer" onclick="switchPage('analyzer');return false;">Анализатор</a>
+        <a href="#page-materials" onclick="switchPage('materials');return false;">Материалы</a>
+        <a href="#page-inspiration" onclick="switchPage('inspiration');return false;">Вдохновение</a>
+        <a href="#page-education" onclick="switchPage('education');return false;">Обучение</a>
+        <a href="#page-analyzer" onclick="switchPage('analyzer');return false;">Анализатор</a>
       </div>
     </div>
   </footer>
@@ -1367,7 +1518,7 @@
 
     function renderCards() {
       const matHtml = MATERIALS_DATA.map(c => `
-        <article class="card" onclick="openModal('${c.id}')">
+        <article class="card" role="button" tabindex="0" onclick="openModal('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModal('${c.id}')}">
           <div class="card-top">
             <div class="icon-box">${c.icon}</div>
             <span class="pill-tag">${c.tag}</span>
@@ -1382,7 +1533,7 @@
       document.getElementById('fullMaterialsGrid').innerHTML = matHtml;
 
       document.getElementById('inspirationGrid').innerHTML = INSPIRATION_DATA.map(c => `
-        <article class="card ${c.wide ? 'wide' : ''}" onclick="openModal('${c.id}')">
+        <article class="card ${c.wide ? 'wide' : ''}" role="button" tabindex="0" onclick="openModal('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModal('${c.id}')}">
           <div>
             <div class="card-top" style="margin-bottom:20px;">
               <div class="icon-box">${c.icon}</div>
@@ -1396,7 +1547,7 @@
       `).join('');
 
       document.getElementById('educationGrid').innerHTML = EDUCATION_DATA.map(c => `
-        <article class="card ${c.wide ? 'wide' : ''}" onclick="openModal('${c.id}')">
+        <article class="card ${c.wide ? 'wide' : ''}" role="button" tabindex="0" onclick="openModal('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModal('${c.id}')}">
           <div>
             <div class="card-top" style="margin-bottom:20px;">
               <div class="icon-box">${c.icon}</div>
@@ -1622,459 +1773,774 @@
     }
 
     /* ==========================================================================
-       МОДУЛЬ 4: АНАЛИЗАТОР С 100% СТАБИЛЬНОЙ ДЕТЕРМИНИРОВАННОЙ ОЦЕНКОЙ
+       МОДУЛЬ 4: ЛОКАЛЬНЫЙ AI-АНАЛИЗАТОР С ДЕТЕРМИНИРОВАННОЙ ОЦЕНКОЙ
        ========================================================================== */
     let currentAuditMode = 'thumbnail';
     let hasLoadedImage = false;
-    // Кэш результатов по отпечатку пикселей, чтобы одна и та же картинка ВСЕГДА давала один и тот же балл
+    let activeAuditRun = 0;
+    let currentAuditResult = null;
+    let currentDetections = [];
     const auditMemoryCache = new Map();
+    const detectionMemoryCache = new Map();
+    const AUDIT_ENGINE_VERSION = 'local-ai-2.1';
+    const overlayState = { objects: true, thirds: false, safe: false };
+    const aiEngine = { status: 'idle', coco: null, face: null, promise: null };
 
     const AUDIT_PROFILES = {
       thumbnail: {
         header: 'ИТОГОВАЯ ОЦЕНКА • ОБЛОЖКИ ВИДЕО',
-        labels: ['1. Композиция', '2. Свет и объём', '3. Крупность текста', '4. Цвет и контраст']
+        labels: ['1. Композиция', '2. Свет и объём', '3. Читаемость текста', '4. Цвет и контраст'],
+        type: 'ОБЛОЖКА ВИДЕО',
+        weights: [0.32, 0.24, 0.24, 0.20]
       },
       uiux: {
         header: 'ИТОГОВАЯ ОЦЕНКА • САЙТЫ И ИНТЕРФЕЙСЫ',
-        labels: ['1. Понятность структуры', '2. Сетка и отступы', '3. Читаемость текста', '4. Чистота акцентов']
+        labels: ['1. Структура и баланс', '2. Свет и глубина', '3. Читаемость текста', '4. Цвет и акценты'],
+        type: 'МАКЕТ ИНТЕРФЕЙСА',
+        weights: [0.28, 0.18, 0.34, 0.20]
       },
       poster: {
         header: 'ИТОГОВАЯ ОЦЕНКА • РЕКЛАМНЫЕ ПОСТЕРЫ',
-        labels: ['1. Главный объект', '2. Глубина кадра', '3. Заметность заголовка', '4. Цветовая гармония']
+        labels: ['1. Главный акцент', '2. Свет и глубина', '3. Читаемость текста', '4. Цветовая гармония'],
+        type: 'РЕКЛАМНЫЙ МАКЕТ',
+        weights: [0.30, 0.22, 0.22, 0.26]
       }
     };
 
+    const OBJECT_LABELS = {
+      person: 'человек', bicycle: 'велосипед', car: 'автомобиль', motorcycle: 'мотоцикл',
+      airplane: 'самолёт', bus: 'автобус', train: 'поезд', truck: 'грузовик', boat: 'лодка',
+      'traffic light': 'светофор', 'stop sign': 'дорожный знак', bench: 'скамейка',
+      bird: 'птица', cat: 'кошка', dog: 'собака', horse: 'лошадь', sheep: 'овца', cow: 'корова',
+      elephant: 'слон', bear: 'медведь', zebra: 'зебра', giraffe: 'жираф', backpack: 'рюкзак',
+      umbrella: 'зонт', handbag: 'сумка', tie: 'галстук', suitcase: 'чемодан', skis: 'лыжи',
+      snowboard: 'сноуборд', 'sports ball': 'спортивный мяч', skateboard: 'скейтборд',
+      surfboard: 'доска для сёрфинга', 'tennis racket': 'теннисная ракетка', bottle: 'бутылка',
+      'wine glass': 'бокал', cup: 'чашка', fork: 'вилка', knife: 'нож', spoon: 'ложка', bowl: 'миска',
+      banana: 'банан', apple: 'яблоко', sandwich: 'сэндвич', orange: 'апельсин', broccoli: 'брокколи',
+      carrot: 'морковь', pizza: 'пицца', donut: 'пончик', cake: 'торт', chair: 'стул', couch: 'диван',
+      'potted plant': 'комнатное растение', bed: 'кровать', 'dining table': 'обеденный стол',
+      tv: 'экран', laptop: 'ноутбук', mouse: 'компьютерная мышь', remote: 'пульт',
+      keyboard: 'клавиатура', 'cell phone': 'смартфон', microwave: 'микроволновая печь',
+      oven: 'духовка', toaster: 'тостер', sink: 'раковина', refrigerator: 'холодильник',
+      book: 'книга', clock: 'часы', vase: 'ваза', scissors: 'ножницы',
+      'teddy bear': 'игрушечный медведь', 'hair drier': 'фен', toothbrush: 'зубная щётка'
+    };
+
+    const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+    const round1 = value => Number(value.toFixed(1));
+    const pct = value => Math.round(value * 100) + '%';
+    const nextFrame = () => new Promise(resolve => requestAnimationFrame(resolve));
+
+    function showToast(message) {
+      const toast = document.getElementById('toastBox');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+
+    function updateScanStage(step, title, subtitle) {
+      document.getElementById('scanStepBadge').textContent = `ШАГ ${step} / 4 • AI-АНАЛИЗ`;
+      document.getElementById('scanTitleText').textContent = title;
+      document.getElementById('scanSubText').textContent = subtitle;
+    }
+
+    function updateAIEngineUI() {
+      const state = document.getElementById('aiEngineState');
+      const note = document.getElementById('aiEngineNote');
+      const states = {
+        idle: ['AI запустится при анализе', 'Изображение остаётся в вашем браузере'],
+        loading: ['Загрузка локальной нейросети…', 'Первый запуск может занять немного времени'],
+        ready: ['Локальный AI • объекты и лица', 'Обработка только на вашем устройстве'],
+        fallback: ['Резервный анализ • AI недоступен', 'Используются карты света, цвета и контуров']
+      };
+      const copy = states[aiEngine.status] || states.idle;
+      state.textContent = copy[0];
+      state.className = 'engine-state ' + aiEngine.status;
+      note.textContent = copy[1];
+    }
+
     function setAuditMode(mode) {
       currentAuditMode = mode;
-      document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
-      const p = AUDIT_PROFILES[mode];
-      document.getElementById('auditProfileLabel').textContent = p.header;
-      document.getElementById('subLbl1').textContent = p.labels[0];
-      document.getElementById('subLbl2').textContent = p.labels[1];
-      document.getElementById('subLbl3').textContent = p.labels[2];
-      document.getElementById('subLbl4').textContent = p.labels[3];
+      document.querySelectorAll('.mode-btn').forEach(button => button.classList.toggle('active', button.dataset.mode === mode));
+      const profile = AUDIT_PROFILES[mode];
+      document.getElementById('auditProfileLabel').textContent = profile.header;
+      profile.labels.forEach((label, index) => {
+        document.getElementById('subLbl' + (index + 1)).textContent = label;
+      });
       if (hasLoadedImage) runFullDesignAudit();
     }
 
     function setCanvasView(view) {
-      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view-tabs .view-btn').forEach(button => button.classList.remove('active'));
       const map = { orig: 'vBtnOrig', bw: 'vBtnBw', blur: 'vBtnBlur', heat: 'vBtnHeat', ctx: 'vBtnCtx' };
       document.getElementById(map[view]).classList.add('active');
-
-      const mainC = document.getElementById('mainCanvas');
-      const heatC = document.getElementById('heatCanvas');
-      const ctxF = document.getElementById('contextFrame');
-
-      mainC.style.filter = 'none';
-      heatC.style.opacity = '0';
-      ctxF.classList.remove('active');
-
-      if (view === 'bw') mainC.style.filter = 'grayscale(100%) contrast(1.08)';
-      if (view === 'blur') mainC.style.filter = 'blur(11px) saturate(1.1)';
-      if (view === 'heat') heatC.style.opacity = '0.88';
-      if (view === 'ctx') ctxF.classList.add('active');
+      const mainCanvas = document.getElementById('mainCanvas');
+      const heatCanvas = document.getElementById('heatCanvas');
+      const contextFrame = document.getElementById('contextFrame');
+      mainCanvas.style.filter = 'none';
+      heatCanvas.style.opacity = '0';
+      contextFrame.classList.remove('active');
+      if (view === 'bw') mainCanvas.style.filter = 'grayscale(100%) contrast(1.08)';
+      if (view === 'blur') mainCanvas.style.filter = 'blur(11px) saturate(1.1)';
+      if (view === 'heat') heatCanvas.style.opacity = '0.88';
+      if (view === 'ctx') contextFrame.classList.add('active');
     }
 
-    /* Поддержка перетаскивания файла и вставки через Ctrl+V */
-    const vpBox = document.getElementById('viewportBox');
-    vpBox.addEventListener('dragover', e => { e.preventDefault(); });
-    vpBox.addEventListener('drop', e => {
-      e.preventDefault();
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) loadFileIntoCanvas(e.dataTransfer.files[0]);
+    function toggleOverlay(layer) {
+      overlayState[layer] = !overlayState[layer];
+      const buttonIds = { objects: 'overlayObjectsBtn', thirds: 'overlayThirdsBtn', safe: 'overlaySafeBtn' };
+      document.getElementById(buttonIds[layer]).setAttribute('aria-pressed', String(overlayState[layer]));
+      drawAnalysisOverlay(currentDetections);
+    }
+
+    const viewportBox = document.getElementById('viewportBox');
+    viewportBox.addEventListener('dragover', event => {
+      event.preventDefault();
+      viewportBox.style.borderColor = 'var(--lime)';
     });
-    window.addEventListener('paste', e => {
-      const items = e.clipboardData?.items;
+    viewportBox.addEventListener('dragleave', () => { viewportBox.style.borderColor = ''; });
+    viewportBox.addEventListener('drop', event => {
+      event.preventDefault();
+      viewportBox.style.borderColor = '';
+      if (event.dataTransfer.files && event.dataTransfer.files[0]) loadFileIntoCanvas(event.dataTransfer.files[0]);
+    });
+    window.addEventListener('paste', event => {
+      const items = event.clipboardData && event.clipboardData.items;
       if (!items) return;
-      for (const it of items) {
-        if (it.type.indexOf('image') !== -1) {
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
           switchPage('analyzer');
-          loadFileIntoCanvas(it.getAsFile());
+          loadFileIntoCanvas(item.getAsFile());
           break;
         }
       }
     });
 
-    function handleFileSelect(e) {
-      if (e.target.files && e.target.files[0]) loadFileIntoCanvas(e.target.files[0]);
+    function handleFileSelect(event) {
+      if (event.target.files && event.target.files[0]) loadFileIntoCanvas(event.target.files[0]);
+      event.target.value = '';
     }
 
     function loadFileIntoCanvas(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        showToast('Выберите изображение PNG, JPG или WEBP');
+        return;
+      }
+      if (file.size > 25 * 1024 * 1024) {
+        showToast('Файл слишком большой. Максимальный размер — 25 МБ');
+        return;
+      }
       const reader = new FileReader();
-      reader.onload = ev => {
-        const img = new Image();
-        img.onload = () => drawAndAuditImage(img);
-        img.src = ev.target.result;
+      reader.onerror = () => showToast('Не удалось прочитать файл');
+      reader.onload = event => {
+        const image = new Image();
+        image.onerror = () => showToast('Этот формат изображения не удалось открыть');
+        image.onload = () => drawAndAuditImage(image);
+        image.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
 
-    /* Пример макета для быстрой проверки в 1 клик */
+    function prepareSourceCanvas(width, height) {
+      const canvas = document.getElementById('mainCanvas');
+      const scale = Math.min(1, 1600 / Math.max(width, height));
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      context.fillStyle = '#0e1015';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      document.getElementById('viewportBox').style.aspectRatio = `${canvas.width} / ${canvas.height}`;
+      const overlay = document.getElementById('overlayCanvas');
+      overlay.width = canvas.width;
+      overlay.height = canvas.height;
+      return { canvas, context };
+    }
+
     function loadDemoDesignSample() {
-      const c = document.getElementById('mainCanvas');
-      const ctx = c.getContext('2d');
-      c.width = 800;
-      c.height = 450;
-
-      const bgGrad = ctx.createLinearGradient(0, 0, 800, 450);
-      bgGrad.addColorStop(0, '#0f131d');
-      bgGrad.addColorStop(1, '#1a1f2e');
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, 800, 450);
-
-      const glow = ctx.createRadialGradient(560, 230, 20, 560, 230, 220);
+      const prepared = prepareSourceCanvas(800, 450);
+      const canvas = prepared.canvas;
+      const context = prepared.context;
+      const background = context.createLinearGradient(0, 0, 800, 450);
+      background.addColorStop(0, '#0f131d');
+      background.addColorStop(1, '#1a1f2e');
+      context.fillStyle = background;
+      context.fillRect(0, 0, 800, 450);
+      const glow = context.createRadialGradient(560, 230, 20, 560, 230, 220);
       glow.addColorStop(0, 'rgba(212, 255, 51, 0.58)');
       glow.addColorStop(1, 'rgba(212, 255, 51, 0)');
-      ctx.fillStyle = glow;
-      ctx.fillRect(0, 0, 800, 450);
-
-      ctx.fillStyle = '#262b38';
-      ctx.strokeStyle = '#d4ff33';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.roundRect(450, 75, 250, 300, 22);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 64px Inter, sans-serif';
-      ctx.fillText('CTRL.PNG', 55, 195);
-
-      ctx.fillStyle = '#d4ff33';
-      ctx.fillRect(55, 220, 320, 74);
-      ctx.fillStyle = '#121317';
-      ctx.font = 'bold 48px Inter, sans-serif';
-      ctx.fillText('ОБЗОР 2026', 74, 275);
-
+      context.fillStyle = glow;
+      context.fillRect(0, 0, 800, 450);
+      context.fillStyle = '#262b38';
+      context.strokeStyle = '#d4ff33';
+      context.lineWidth = 4;
+      context.beginPath();
+      context.roundRect(450, 75, 250, 300, 22);
+      context.fill();
+      context.stroke();
+      context.fillStyle = '#ffffff';
+      context.font = 'bold 64px Inter, sans-serif';
+      context.fillText('CTRL.PNG', 55, 195);
+      context.fillStyle = '#d4ff33';
+      context.fillRect(55, 220, 320, 74);
+      context.fillStyle = '#121317';
+      context.font = 'bold 48px Inter, sans-serif';
+      context.fillText('ОБЗОР 2026', 74, 275);
       hasLoadedImage = true;
       document.getElementById('dropzoneOverlay').classList.add('hidden');
       runFullDesignAudit();
     }
 
-    function drawAndAuditImage(img) {
-      const c = document.getElementById('mainCanvas');
-      const ctx = c.getContext('2d');
-      c.width = 800;
-      c.height = 450;
-      ctx.fillStyle = '#0e1015';
-      ctx.fillRect(0, 0, 800, 450);
-
-      const scale = Math.min(800 / img.width, 450 / img.height);
-      const w = img.width * scale;
-      const h = img.height * scale;
-      ctx.drawImage(img, (800 - w) / 2, (450 - h) / 2, w, h);
-
+    function drawAndAuditImage(image) {
+      const prepared = prepareSourceCanvas(image.naturalWidth || image.width, image.naturalHeight || image.height);
+      prepared.context.drawImage(image, 0, 0, prepared.canvas.width, prepared.canvas.height);
       hasLoadedImage = true;
       document.getElementById('dropzoneOverlay').classList.add('hidden');
       runFullDesignAudit();
     }
 
-    /* Детерминированный расчёт отпечатка картинки (FNV-1a hash) + строгих математических оценок */
-    function computePixelHeuristicsAndHeatmap() {
-      const srcCanvas = document.getElementById('mainCanvas');
+    function computeVisualFeaturesAndHeatmap() {
+      const source = document.getElementById('mainCanvas');
       const heatCanvas = document.getElementById('heatCanvas');
-      const W = 420, H = 236;
-      heatCanvas.width = W;
-      heatCanvas.height = H;
-      const hCtx = heatCanvas.getContext('2d');
-      hCtx.drawImage(srcCanvas, 0, 0, W, H);
-
-      const imgData = hCtx.getImageData(0, 0, W, H);
-      const d = imgData.data;
-      const lum = new Float32Array(W * H);
-
-      // Вычисляем детерминированный хеш-отпечаток пикселей (FNV-1a)
+      const scale = 360 / Math.max(source.width, source.height);
+      const width = Math.max(64, Math.round(source.width * scale));
+      const height = Math.max(64, Math.round(source.height * scale));
+      heatCanvas.width = width;
+      heatCanvas.height = height;
+      const context = heatCanvas.getContext('2d', { willReadFrequently: true });
+      context.drawImage(source, 0, 0, width, height);
+      const imageData = context.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      const total = width * height;
+      const luminance = new Float32Array(total);
+      const saturation = new Float32Array(total);
+      const histogram = new Uint32Array(256);
+      const colorBuckets = new Map();
       let hash = 2166136261;
-      for (let i = 0; i < d.length; i += 64) {
-        hash ^= d[i];
-        hash = Math.imul(hash, 16777619);
-        hash ^= d[i + 1];
-        hash = Math.imul(hash, 16777619);
-        hash ^= d[i + 2];
-        hash = Math.imul(hash, 16777619);
-      }
-      const fingerprint = (hash >>> 0).toString(16) + '_' + currentAuditMode;
+      let sumL = 0, sumSat = 0, highlights = 0, shadows = 0, muddyShadows = 0;
+      let centerL = 0, centerCount = 0, outerL = 0, outerCount = 0;
+      let sumRg = 0, sumYb = 0, sumRg2 = 0, sumYb2 = 0;
 
-      let sumL = 0, sumSat = 0, brightPaperPixels = 0;
-      for (let i = 0; i < d.length; i += 4) {
-        const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
-        const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        lum[i >> 2] = l;
-        sumL += l;
+      for (let index = 0, pixel = 0; index < data.length; index += 4, pixel++) {
+        const r = data[index], g = data[index + 1], b = data[index + 2];
+        const l = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
         const max = Math.max(r, g, b), min = Math.min(r, g, b);
         const sat = max === 0 ? 0 : (max - min) / max;
+        luminance[pixel] = l;
+        saturation[pixel] = sat;
+        sumL += l;
         sumSat += sat;
-        if (l > 0.52 && sat < 0.22) brightPaperPixels++;
-      }
-
-      const totalPx = W * H;
-      const meanL = sumL / totalPx;
-      const meanSat = sumSat / totalPx;
-      let varL = 0;
-      for (let i = 0; i < totalPx; i++) varL += (lum[i] - meanL) ** 2;
-      const stdL = Math.sqrt(varL / totalPx);
-
-      // Карта внимания + анализ контуров и центра композиции
-      const heatOut = hCtx.createImageData(W, H);
-      const hd = heatOut.data;
-      let edgeSum = 0, centerEdgeSum = 0, highFreqCells = 0;
-
-      for (let y = 1; y < H - 1; y++) {
-        for (let x = 1; x < W - 1; x++) {
-          const idx = y * W + x;
-          const gx = -lum[idx - W - 1] + lum[idx - W + 1] - 2 * lum[idx - 1] + 2 * lum[idx + 1] - lum[idx + W - 1] + lum[idx + W + 1];
-          const gy = -lum[idx - W - 1] - 2 * lum[idx - W] - lum[idx - W + 1] + lum[idx + W - 1] + 2 * lum[idx + W] + lum[idx + W + 1];
-          const mag = Math.min(1, Math.hypot(gx, gy));
-          edgeSum += mag;
-          if (x > W * 0.18 && x < W * 0.82 && y > H * 0.15 && y < H * 0.85) {
-            centerEdgeSum += mag;
-          }
-          if (mag > 0.32) highFreqCells++;
-
-          const p = idx * 4;
-          hd[p] = Math.min(255, mag * 380);
-          hd[p + 1] = Math.min(255, Math.max(0, (mag - 0.25) * 320));
-          hd[p + 2] = Math.max(0, 180 - mag * 260);
-          hd[p + 3] = Math.min(235, mag * 290 + 25);
+        histogram[Math.min(255, Math.round(l * 255))]++;
+        if (l > 0.965) highlights++;
+        if (l < 0.045) shadows++;
+        if (l < 0.16 && sat < 0.20) muddyShadows++;
+        const x = pixel % width, y = Math.floor(pixel / width);
+        if (x > width * 0.25 && x < width * 0.75 && y > height * 0.25 && y < height * 0.75) {
+          centerL += l; centerCount++;
+        } else { outerL += l; outerCount++; }
+        const rg = r - g;
+        const yb = 0.5 * (r + g) - b;
+        sumRg += rg; sumYb += yb; sumRg2 += rg * rg; sumYb2 += yb * yb;
+        if (pixel % 4 === 0) {
+          const key = `${r >> 4}-${g >> 4}-${b >> 4}`;
+          const bucket = colorBuckets.get(key) || { count: 0, r: 0, g: 0, b: 0 };
+          bucket.count++; bucket.r += r; bucket.g += g; bucket.b += b;
+          colorBuckets.set(key, bucket);
+        }
+        if (index % 32 === 0) {
+          hash ^= r; hash = Math.imul(hash, 16777619);
+          hash ^= g; hash = Math.imul(hash, 16777619);
+          hash ^= b; hash = Math.imul(hash, 16777619);
         }
       }
-      hCtx.putImageData(heatOut, 0, 0);
 
-      const paperRatio = brightPaperPixels / totalPx;
-      const edgeDensity = highFreqCells / totalPx;
-      const centerFocusRatio = edgeSum > 0 ? centerEdgeSum / edgeSum : 0.5;
+      const meanL = sumL / total;
+      const meanSat = sumSat / total;
+      let varianceL = 0;
+      for (let index = 0; index < total; index++) varianceL += (luminance[index] - meanL) ** 2;
+      const stdL = Math.sqrt(varianceL / total);
+      const meanRg = sumRg / total, meanYb = sumYb / total;
+      const colorfulness = Math.sqrt(Math.max(0, sumRg2 / total - meanRg ** 2) + Math.max(0, sumYb2 / total - meanYb ** 2))
+        + 0.3 * Math.hypot(meanRg, meanYb);
 
-      // Детектор рукописных тетрадей, конспектов и случайных бытовых фото без дизайна
-      const isNotebookOrDoc = (paperRatio > 0.48 && meanSat < 0.22 && edgeDensity > 0.06) || (stdL < 0.13 && meanSat < 0.14);
+      const percentile = threshold => {
+        let accumulated = 0;
+        for (let index = 0; index < 256; index++) {
+          accumulated += histogram[index];
+          if (accumulated >= total * threshold) return index / 255;
+        }
+        return 1;
+      };
+      const dynamicRange = Math.max(0, percentile(0.95) - percentile(0.05));
+      const heatOutput = context.createImageData(width, height);
+      const heatData = heatOutput.data;
+      const quadrantEdges = [0, 0, 0, 0];
+      let edgeSum = 0, centerEdgeSum = 0, marginEdgeSum = 0, highFrequency = 0;
+      let attentionSum = 0, attentionX = 0, attentionY = 0;
 
-      if (isNotebookOrDoc) {
-        return {
-          fingerprint,
-          is_design_layout: false,
-          detected_type: 'НЕ ЯВЛЯЕТСЯ МАКЕТОМ (ФОТО / КОНСПЕКТ)',
-          summary: 'Обнаружена фотография тетради, документа или обычный снимок без оформления, выраженного главного объекта и работы со светом.',
-          verdict_title: 'Низкая оценка: это обычное фото или конспект',
-          sub_scores: [1.5, 1.2, 1.4, 1.5],
-          final_score: 1.4,
-          critique: [
-            '1. Композиция: На изображении нет главного героя или крупного акцента. Кадр заполнен однородным текстом или бытовым фоном.',
-            '2. Свет и объём: Отсутствует отделение переднего плана от фона и работа с освещением.',
-            '3. Текст: Вместо крупного заголовка на картинке мелкий рукописный или печатный текст, который невозможно прочитать в ленте.',
-            '4. Цвет и контраст: Тусклая бытовая гамма без цветовых акцентов.'
-          ],
-          steps: [
-            'Загрузите готовое превью, макет сайта или рекламный баннер.',
-            'Оставьте в кадре не более 3 крупных элементов: главный объект, понятный фон и 1–3 слова крупного текста.'
-          ]
-        };
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          const index = y * width + x;
+          const gx = -luminance[index - width - 1] + luminance[index - width + 1]
+            - 2 * luminance[index - 1] + 2 * luminance[index + 1]
+            - luminance[index + width - 1] + luminance[index + width + 1];
+          const gy = -luminance[index - width - 1] - 2 * luminance[index - width]
+            - luminance[index - width + 1] + luminance[index + width - 1]
+            + 2 * luminance[index + width] + luminance[index + width + 1];
+          const magnitude = clamp(Math.hypot(gx, gy) / 4);
+          const attention = clamp(magnitude * 1.3 + Math.abs(luminance[index] - meanL) * 0.35 + saturation[index] * 0.08);
+          edgeSum += magnitude;
+          attentionSum += attention;
+          attentionX += attention * (x / width);
+          attentionY += attention * (y / height);
+          const quadrant = (y >= height / 2 ? 2 : 0) + (x >= width / 2 ? 1 : 0);
+          quadrantEdges[quadrant] += magnitude;
+          if (x > width * 0.18 && x < width * 0.82 && y > height * 0.15 && y < height * 0.85) centerEdgeSum += magnitude;
+          if (x < width * 0.05 || x > width * 0.95 || y < height * 0.05 || y > height * 0.95) marginEdgeSum += magnitude;
+          if (magnitude > 0.18) highFrequency++;
+          const outputIndex = index * 4;
+          heatData[outputIndex] = Math.min(255, attention * 390);
+          heatData[outputIndex + 1] = Math.min(255, Math.max(0, (attention - 0.22) * 340));
+          heatData[outputIndex + 2] = Math.max(0, 180 - attention * 270);
+          heatData[outputIndex + 3] = Math.min(235, attention * 300 + 18);
+        }
       }
+      context.putImageData(heatOutput, 0, 0);
 
-      // 100% детерминированные формулы по 4 критериям (всегда дают одинаковый результат для одной и той же картинки)
-      const modeOffset = currentAuditMode === 'thumbnail' ? 0.2 : (currentAuditMode === 'uiux' ? 0.0 : 0.1);
-      const rawS1 = 5.8 + stdL * 9.5 + centerFocusRatio * 1.6 + modeOffset;
-      const rawS2 = 5.6 + (edgeSum / totalPx) * 12.5 + stdL * 4.2;
-      const rawS3 = 5.9 + stdL * 8.8 + (1 - Math.abs(edgeDensity - 0.14)) * 1.4;
-      const rawS4 = 5.8 + meanSat * 5.8 + stdL * 5.0;
-
-      const s1 = Number(Math.min(9.6, Math.max(4.5, rawS1)).toFixed(1));
-      const s2 = Number(Math.min(9.5, Math.max(4.5, rawS2)).toFixed(1));
-      const s3 = Number(Math.min(9.5, Math.max(4.5, rawS3)).toFixed(1));
-      const s4 = Number(Math.min(9.6, Math.max(4.5, rawS4)).toFixed(1));
-      const finalScore = Number(((s1 + s2 + s3 + s4) / 4).toFixed(1));
+      const left = quadrantEdges[0] + quadrantEdges[2];
+      const right = quadrantEdges[1] + quadrantEdges[3];
+      const top = quadrantEdges[0] + quadrantEdges[1];
+      const bottom = quadrantEdges[2] + quadrantEdges[3];
+      const horizontalImbalance = edgeSum ? Math.abs(left - right) / edgeSum : 0;
+      const verticalImbalance = edgeSum ? Math.abs(top - bottom) / edgeSum : 0;
+      const centerX = attentionSum ? attentionX / attentionSum : 0.5;
+      const centerY = attentionSum ? attentionY / attentionSum : 0.5;
+      const thirdPoints = [[1/3, 1/3], [2/3, 1/3], [1/3, 2/3], [2/3, 2/3]];
+      const thirdDistance = Math.min(...thirdPoints.map(point => Math.hypot(centerX - point[0], centerY - point[1])));
+      const palette = [...colorBuckets.values()].sort((a, b) => b.count - a.count).slice(0, 6).map(bucket => ({
+        count: bucket.count,
+        hex: '#' + [bucket.r, bucket.g, bucket.b].map(value => Math.round(value / bucket.count).toString(16).padStart(2, '0')).join('').toUpperCase()
+      }));
 
       return {
-        fingerprint,
-        is_design_layout: true,
-        detected_type: currentAuditMode === 'thumbnail' ? 'ОБЛОЖКА ВИДЕО' : (currentAuditMode === 'uiux' ? 'МАКЕТ САЙТА' : 'РЕКЛАМНЫЙ БАННЕР'),
-        summary: 'Цельный дизайн-макет с хорошим контрастом главного объекта, заметными акцентами и чистым разделением переднего и заднего планов.',
-        verdict_title: finalScore >= 8.0 ? 'Отличный результат • Высокая заметность' : 'Хорошая основа • Можно усилить детали',
-        sub_scores: [s1, s2, s3, s4],
-        final_score: finalScore,
-        critique: [
-          `1. Композиция (${s1}/10): Главный объект хорошо заметен, но вокруг текста стоит оставить чуть больше свободного места.`,
-          `2. Свет и объём (${s2}/10): Передний план отделён от фона; можно добавить мягкий контурный свет по краям главного героя.`,
-          `3. Текст (${s3}/10): Заголовок хорошо считывается при уменьшении, следите, чтобы мелкие детали не мешали буквам.`,
-          `4. Цвет и контраст (${s4}/10): Приятное сочетание оттенков; углы кадра можно слегка затемнить, чтобы взгляд шёл в центр.`
-        ],
-        steps: [
-          'Усильте контраст между фоном и главным объектом, чтобы силуэт читался даже при сильном уменьшении.',
-          'Проверьте работу во вкладках «Ч/Б Тон» и «Тест прищура» — главные элементы должны оставаться чёткими.'
-        ]
+        fingerprint: `${(hash >>> 0).toString(16)}_${source.width}x${source.height}`,
+        width, height, luminance,
+        meanL, meanSat, stdL, dynamicRange,
+        colorfulness: clamp(colorfulness / 70),
+        highlightRatio: highlights / total,
+        shadowRatio: shadows / total,
+        muddyShadowRatio: muddyShadows / total,
+        edgeDensity: highFrequency / total,
+        centerFocusRatio: edgeSum ? centerEdgeSum / edgeSum : 0.35,
+        safeAttention: edgeSum ? clamp(1 - marginEdgeSum / edgeSum) : 0.7,
+        horizontalImbalance, verticalImbalance,
+        balanceIndex: edgeSum ? clamp(1 - (horizontalImbalance + verticalImbalance) * 0.65) : 0.55,
+        thirdsAffinity: clamp(1 - thirdDistance / 0.42),
+        attentionX: centerX, attentionY: centerY,
+        leftShare: edgeSum ? left / edgeSum : 0.5,
+        topShare: edgeSum ? top / edgeSum : 0.5,
+        centerPeripheryContrast: Math.abs((centerL / Math.max(1, centerCount)) - (outerL / Math.max(1, outerCount))),
+        palette
       };
     }
 
-    async function fetchGeminiTextExplanation(deterministicData) {
-      const apiKey = "";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-      const tempC = document.createElement('canvas');
-      tempC.width = 420;
-      tempC.height = 236;
-      tempC.getContext('2d').drawImage(document.getElementById('mainCanvas'), 0, 0, 420, 236);
-      const b64 = tempC.toDataURL('image/jpeg', 0.78).split(',')[1];
+    function loadExternalScript(source, globalName) {
+      if (window[globalName]) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector(`script[src="${source}"]`);
+        if (existing) {
+          existing.addEventListener('load', resolve, { once: true });
+          existing.addEventListener('error', () => reject(new Error('Не удалось загрузить AI-модуль')), { once: true });
+          return;
+        }
+        const script = document.createElement('script');
+        const timer = setTimeout(() => reject(new Error('Тайм-аут загрузки AI-модуля')), 20000);
+        script.src = source;
+        script.async = true;
+        script.onload = () => { clearTimeout(timer); resolve(); };
+        script.onerror = () => { clearTimeout(timer); reject(new Error('Не удалось загрузить AI-модуль')); };
+        document.head.appendChild(script);
+      });
+    }
 
-      const ctxTitle = document.getElementById('auditContextTitle').value.trim();
-      const niche = document.getElementById('auditNicheSelect').value;
-      const [s1, s2, s3, s4] = deterministicData.sub_scores;
+    function withTimeout(promise, milliseconds) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Тайм-аут инициализации AI')), milliseconds))
+      ]);
+    }
 
-      const prompt = `Ты опытный арт-директор. Опиши это изображение простым и понятным русским языком без сложных англоязычных терминов.
-Режим: ${currentAuditMode}. Тема: ${niche}. Название проекта: "${ctxTitle || 'не указано'}".
-ВАЖНО: Точные математические оценки для этого изображения уже вычислены и зафиксированы:
-- Итоговый балл: ${deterministicData.final_score} из 10
-- 1. Композиция: ${s1}/10
-- 2. Свет и объём: ${s2}/10
-- 3. Текст: ${s3}/10
-- 4. Цвет и контраст: ${s4}/10
-Если на фото обычная тетрадь с рукописным текстом, документ или случайная бытовая фотография без дизайна — установи is_design_layout: false. Иначе объясни в critique и steps, что именно изображено на картинке и как её улучшить, опираясь строго на эти зафиксированные баллы.`;
+    function ensureAIEngine() {
+      if (aiEngine.status === 'ready' && (aiEngine.coco || aiEngine.face)) return Promise.resolve();
+      if (aiEngine.promise) return aiEngine.promise;
+      aiEngine.status = 'loading';
+      updateAIEngineUI();
+      aiEngine.promise = (async () => {
+        try {
+          await loadExternalScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js', 'tf');
+          try { await window.tf.setBackend('webgl'); } catch (_) { await window.tf.setBackend('cpu'); }
+          await window.tf.ready();
+          const libraries = await Promise.allSettled([
+            loadExternalScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js', 'cocoSsd'),
+            loadExternalScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.1.0/dist/blazeface.min.umd.js', 'blazeface')
+          ]);
+          const loaders = [];
+          if (libraries[0].status === 'fulfilled' && window.cocoSsd) {
+            loaders.push(withTimeout(window.cocoSsd.load({ base: 'lite_mobilenet_v2' }), 30000).then(model => { aiEngine.coco = model; }));
+          }
+          if (libraries[1].status === 'fulfilled' && window.blazeface) {
+            loaders.push(withTimeout(window.blazeface.load(), 30000).then(model => { aiEngine.face = model; }));
+          }
+          await Promise.allSettled(loaders);
+          if (!aiEngine.coco && !aiEngine.face) throw new Error('AI-модели недоступны');
+          aiEngine.status = 'ready';
+        } catch (_) {
+          aiEngine.status = 'fallback';
+        } finally {
+          updateAIEngineUI();
+          aiEngine.promise = null;
+        }
+      })();
+      return aiEngine.promise;
+    }
 
-      const payload = {
-        contents: [{
-          role: "user",
-          parts: [
-            { text: prompt },
-            { inlineData: { mimeType: "image/jpeg", data: b64 } }
-          ]
-        }],
-        generationConfig: {
-          temperature: 0,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              is_design_layout: { type: "BOOLEAN" },
-              detected_type: { type: "STRING" },
-              summary: { type: "STRING" },
-              verdict_title: { type: "STRING" },
-              critique: { type: "ARRAY", items: { type: "STRING" } },
-              steps: { type: "ARRAY", items: { type: "STRING" } }
-            },
-            required: ["is_design_layout", "detected_type", "summary", "verdict_title", "critique", "steps"]
+    function normalizeDetection(box, sourceWidth, sourceHeight, label, confidence, kind, id) {
+      const x = clamp(box[0], 0, sourceWidth);
+      const y = clamp(box[1], 0, sourceHeight);
+      const width = clamp(box[2], 0, sourceWidth - x);
+      const height = clamp(box[3], 0, sourceHeight - y);
+      return { id, label, confidence, kind, bbox: [x, y, width, height] };
+    }
+
+    async function detectSceneObjects(fingerprint) {
+      if (detectionMemoryCache.has(fingerprint)) return detectionMemoryCache.get(fingerprint);
+      const source = document.getElementById('mainCanvas');
+      const tasks = [];
+      if (aiEngine.coco) {
+        tasks.push(aiEngine.coco.detect(source, 12, 0.45).then(predictions => predictions.map((prediction, index) =>
+          normalizeDetection(prediction.bbox, source.width, source.height,
+            OBJECT_LABELS[prediction.class] || 'объект', prediction.score, 'object', 'object-' + index)
+        )).catch(() => []));
+      }
+      if (aiEngine.face) {
+        tasks.push(aiEngine.face.estimateFaces(source, false, false, true).then(predictions => predictions.map((prediction, index) => {
+          const topLeft = prediction.topLeft;
+          const bottomRight = prediction.bottomRight;
+          const confidence = Array.isArray(prediction.probability) ? prediction.probability[0] : prediction.probability;
+          return normalizeDetection([topLeft[0], topLeft[1], bottomRight[0] - topLeft[0], bottomRight[1] - topLeft[1]],
+            source.width, source.height, 'лицо', confidence || 0, 'face', 'face-' + index);
+        }).filter(item => item.confidence >= 0.85)).catch(() => []));
+      }
+      const groups = await Promise.all(tasks);
+      const detections = groups.flat().filter(item => item.bbox[2] > source.width * 0.008 && item.bbox[3] > source.height * 0.008)
+        .sort((a, b) => (b.confidence * b.bbox[2] * b.bbox[3]) - (a.confidence * a.bbox[2] * a.bbox[3])).slice(0, 12);
+      if (aiEngine.status === 'ready') detectionMemoryCache.set(fingerprint, detections);
+      return detections;
+    }
+
+    function calculateSubjectContrast(features, detections) {
+      if (!detections.length) return clamp(features.centerPeripheryContrast * 3.2);
+      const source = document.getElementById('mainCanvas');
+      const largest = [...detections].sort((a, b) => b.bbox[2] * b.bbox[3] - a.bbox[2] * a.bbox[3])[0];
+      const sx = features.width / source.width, sy = features.height / source.height;
+      const box = [largest.bbox[0] * sx, largest.bbox[1] * sy, largest.bbox[2] * sx, largest.bbox[3] * sy];
+      const regionMean = (x, y, width, height) => {
+        const x1 = Math.max(0, Math.floor(x)), y1 = Math.max(0, Math.floor(y));
+        const x2 = Math.min(features.width, Math.ceil(x + width)), y2 = Math.min(features.height, Math.ceil(y + height));
+        let sum = 0, count = 0;
+        for (let row = y1; row < y2; row += 2) {
+          for (let column = x1; column < x2; column += 2) {
+            sum += features.luminance[row * features.width + column]; count++;
           }
         }
+        return { mean: sum / Math.max(1, count), count };
       };
+      const inner = regionMean(box[0] + box[2] * 0.1, box[1] + box[3] * 0.1, box[2] * 0.8, box[3] * 0.8);
+      const outer = regionMean(box[0] - box[2] * 0.16, box[1] - box[3] * 0.16, box[2] * 1.32, box[3] * 1.32);
+      const ringCount = Math.max(1, outer.count - inner.count);
+      const ringMean = Math.max(0, (outer.mean * outer.count - inner.mean * inner.count) / ringCount);
+      return clamp(Math.abs(inner.mean - ringMean) * 3.4);
+    }
 
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!txt) return deterministicData;
+    function calculateDeterministicScores(features) {
+      const clutterLimit = currentAuditMode === 'uiux' ? 0.24 : 0.17;
+      const clutterPenalty = Math.max(0, features.edgeDensity - clutterLimit) * 10;
+      const composition = clamp(3.4 + features.balanceIndex * 2.1 + features.thirdsAffinity * 1.5
+        + features.centerFocusRatio * 0.8 + features.safeAttention * 0.7 - clutterPenalty, 1.2, 9.8);
+      const light = clamp(3.3 + features.dynamicRange * 4.3 + features.stdL * 2.4
+        + features.subjectContrast * 1.2 - features.highlightRatio * 6 - Math.max(0, features.shadowRatio - 0.28) * 4, 1.2, 9.8);
+      const text = clamp(3.6 + features.dynamicRange * 3.8 + features.stdL * 2.2 + features.safeAttention * 0.8
+        - clutterPenalty * (currentAuditMode === 'uiux' ? 0.3 : 0.7), 1.2, 9.8);
+      const color = clamp(3.5 + features.dynamicRange * 2.5 + features.colorfulness * 1.7
+        + clamp(features.meanSat * 2, 0, 1.2) - features.highlightRatio * 3
+        - Math.max(0, features.meanSat - 0.62) * 4, 1.2, 9.8);
+      const scores = [composition, light, text, color].map(round1);
+      const weights = AUDIT_PROFILES[currentAuditMode].weights;
+      const finalScore = round1(scores.reduce((sum, score, index) => sum + score * weights[index], 0));
+      return { scores, finalScore };
+    }
 
-      const parsed = JSON.parse(txt);
-      // Если ИИ обнаружил, что это не макет (например, фото тетради или документа), фиксируем низкий балл 1.4
-      if (parsed.is_design_layout === false || !deterministicData.is_design_layout) {
-        return {
-          ...deterministicData,
-          is_design_layout: false,
-          detected_type: 'НЕ ЯВЛЯЕТСЯ МАКЕТОМ (ФОТО / КОНСПЕКТ)',
-          summary: parsed.summary || deterministicData.summary,
-          verdict_title: 'Низкая оценка: это обычное фото или конспект',
-          sub_scores: [1.5, 1.2, 1.4, 1.5],
-          final_score: 1.4,
-          critique: parsed.critique?.length === 4 ? parsed.critique : deterministicData.critique,
-          steps: parsed.steps?.length ? parsed.steps : deterministicData.steps
-        };
+    function buildAIAnalysis(features, detections) {
+      const scored = calculateDeterministicScores(features);
+      const subjectContrast = features.advisorySubjectContrast ?? features.subjectContrast;
+      const scores = scored.scores;
+      const finalScore = scored.finalScore;
+      const faces = detections.filter(item => item.kind === 'face');
+      const objects = detections.filter(item => item.kind !== 'face');
+      const uniqueObjects = [...new Set(objects.map(item => item.label))].slice(0, 4);
+      const horizontal = features.attentionX < 0.43 ? 'в левой части' : features.attentionX > 0.57 ? 'в правой части' : 'рядом с центром';
+      const vertical = features.attentionY < 0.43 ? 'верхней половине' : features.attentionY > 0.57 ? 'нижней половине' : 'средней половине';
+      const found = [];
+      if (faces.length) found.push(faces.length === 1 ? 'одно лицо' : `лица: ${faces.length}`);
+      if (uniqueObjects.length) found.push(uniqueObjects.join(', '));
+      let summary = found.length
+        ? `AI обнаружил: ${found.join('; ')}. Основная зона внимания — ${horizontal}, в ${vertical}.`
+        : aiEngine.status === 'ready'
+          ? `AI не нашёл объектов с достаточной уверенностью. По картам контуров и яркости основная зона внимания — ${horizontal}, в ${vertical}.`
+          : `Нейросетевой модуль недоступен, поэтому выполнен расширенный анализ пикселей. Основная зона внимания — ${horizontal}, в ${vertical}.`;
+      const contextTitle = document.getElementById('auditContextTitle').value.trim();
+      if (contextTitle) summary += ` Разбор учитывает контекст проекта «${contextTitle}».`;
+
+      let compositionText;
+      if (features.horizontalImbalance > 0.32) {
+        const heavy = features.leftShare > 0.5 ? 'Левая' : 'Правая';
+        compositionText = `${heavy} половина визуально тяжелее: там ${pct(features.leftShare > 0.5 ? features.leftShare : 1 - features.leftShare)} контурной активности. Проверьте, уравновешен ли этот перекос текстом, светом или свободным пространством.`;
+      } else if (features.thirdsAffinity < 0.42) {
+        compositionText = 'Центр внимания находится вне сильных точек правила третей. Сместите главный объект или заголовок ближе к одной из четырёх точек пересечения, если это не нарушает замысел.';
+      } else if (features.safeAttention < 0.72) {
+        compositionText = 'Слишком много контрастных деталей расположено у самых краёв. Верните важные элементы внутрь безопасной зоны, чтобы кадр не терял смысл при обрезке.';
+      } else {
+        compositionText = `Баланс квадрантов собран: разница левой и правой частей ${pct(features.horizontalImbalance)}, верхней и нижней — ${pct(features.verticalImbalance)}. Главный акцент читается без явного перекоса.`;
       }
 
-      // Сохраняем 100% фиксированные математические оценки deterministicData.sub_scores, чтобы балл НИКОГДА не прыгал!
+      let lightText;
+      if (features.highlightRatio > 0.055) {
+        lightText = `Пересветы занимают около ${pct(features.highlightRatio)} кадра. Снизьте яркость самых светлых участков и верните фактуру, особенно на лице и главном объекте.`;
+      } else if (features.shadowRatio > 0.28 || (features.muddyShadowRatio > 0.48 && features.stdL < 0.20)) {
+        lightText = `Глубокие тени занимают около ${pct(features.shadowRatio)} кадра. Приоткройте детали в тёмных участках мягким заполняющим светом, не поднимая весь фон целиком.`;
+      } else if (subjectContrast < 0.28) {
+        lightText = 'Главный объект близок к фону по яркости. Добавьте тонкий контурный свет по силуэту и слегка затемните область непосредственно за объектом.';
+      } else {
+        lightText = `Динамический диапазон ${pct(features.dynamicRange)}, объект отделяется от фона. Сохраните текущий свет и проверьте, не появляются ли грязные тени после сжатия изображения.`;
+      }
+
+      let textText;
+      if (features.dynamicRange < 0.28) {
+        textText = 'Яркостного запаса для уверенной читаемости недостаточно. Поставьте текст на более однородную подложку или усильте разницу яркости между буквами и фоном минимум до 4.5:1.';
+      } else if (features.edgeDensity > (currentAuditMode === 'uiux' ? 0.28 : 0.21)) {
+        textText = 'В кадре высокая плотность мелких контрастных деталей. Уберите второстепенные элементы вокруг заголовка: в уменьшенном виде они будут конкурировать с буквами.';
+      } else if (features.safeAttention < 0.72) {
+        textText = 'Активные детали подошли близко к краям. Не размещайте там заголовок и важные подписи; для превью также оставьте свободным правый нижний угол под длительность видео.';
+      } else {
+        textText = 'Контрастная база для текста хорошая. Проверьте заголовок в режиме «Тест прищура»: смысл должен считываться без разглядывания мелких строк.';
+      }
+
+      let colorText;
+      if (features.meanSat > 0.58) {
+        colorText = 'Насыщенных цветов много, поэтому акценты могут спорить друг с другом. Оставьте один ведущий цвет, а остальные приглушите по насыщенности.';
+      } else if (features.meanSat < 0.10 && scores[3] < 7.2) {
+        colorText = 'Гамма почти монохромная. Если работе не хватает точки притяжения, добавьте один небольшой цветовой акцент рядом с главным объектом или призывом к действию.';
+      } else if (features.highlightRatio > 0.055) {
+        colorText = 'Светлые участки забирают внимание и обедняют цвет. Верните им оттенок и детализацию, а самый яркий акцент оставьте только на главном элементе.';
+      } else {
+        colorText = `Средняя насыщенность ${pct(features.meanSat)}, палитра собрана в цветовой шкале слева. Сохраняйте один ведущий акцент и не проверяйте контраст только по цвету — используйте также чёрно-белый режим.`;
+      }
+
+      const critique = [compositionText, lightText, textText, colorText].map((text, index) =>
+        `${AUDIT_PROFILES[currentAuditMode].labels[index]} (${scores[index]}/10): ${text}`
+      );
+      const steps = [];
+      const addStep = (condition, priority, text) => { if (condition) steps.push({ priority, text }); };
+      addStep(subjectContrast < 0.35, 10 - scores[1] + 3, 'Отделите главный объект от фона: добавьте мягкий контурный свет по силуэту и уберите лишнюю яркость непосредственно за ним.');
+      addStep(features.highlightRatio > 0.055, 12, 'Восстановите детали в пересвеченных зонах: уменьшите экспозицию или яркость белого только на этих участках.');
+      addStep(features.shadowRatio > 0.28, 11, 'Проявите важные детали в глубоких тенях мягким заполняющим светом, сохранив общий контраст кадра.');
+      addStep(features.horizontalImbalance > 0.32 || features.verticalImbalance > 0.42, 10 - scores[0] + 2, 'Выровняйте визуальный вес квадрантов: утяжелённую сторону можно уравновесить не новым объектом, а светом, текстом или воздухом.');
+      addStep(features.thirdsAffinity < 0.42, 10 - scores[0] + 1, 'Включите сетку третей и попробуйте переместить главный акцент к ближайшей сильной точке, не меняя остальную композицию.');
+      addStep(scores[2] < 6.8, 10 - scores[2] + 2, 'Упростите область вокруг текста и проверьте контраст букв к фону. Для обложки оставьте одну короткую фразу, для интерфейса — понятную иерархию заголовков и подписей.');
+      addStep(scores[3] < 6.5, 10 - scores[3] + 1, 'Сократите палитру до базового цвета, нейтральных оттенков и одного акцента; затем повторно проверьте работу в чёрно-белом режиме.');
+      addStep(features.safeAttention < 0.72, 9, 'Включите безопасные зоны и отодвиньте важные надписи от краёв. На превью освободите правый нижний угол под интерфейс плеера.');
+      steps.sort((a, b) => b.priority - a.priority);
+      const actionSteps = steps.slice(0, 3).map(item => item.text);
+      if (!actionSteps.length) {
+        actionSteps.push('Сильных технических проблем не найдено. Проверьте макет в размере реальной публикации и убедитесь, что главный смысл считывается за две секунды.');
+        actionSteps.push('Сохраните текущую иерархию и сравните экспорт с исходником: сжатие не должно добавлять грязные тени или ореолы вокруг текста.');
+      }
+
+      const verdict = finalScore >= 8.5 ? 'Сильная работа • можно готовить к публикации'
+        : finalScore >= 7.2 ? 'Хорошая основа • есть что усилить'
+          : finalScore >= 5.5 ? 'Рабочий макет • нужны точечные правки'
+            : 'Требует доработки • начните с главного акцента';
       return {
-        ...deterministicData,
-        detected_type: parsed.detected_type || deterministicData.detected_type,
-        summary: parsed.summary || deterministicData.summary,
-        verdict_title: parsed.verdict_title || deterministicData.verdict_title,
-        critique: parsed.critique?.length === 4 ? parsed.critique : deterministicData.critique,
-        steps: parsed.steps?.length ? parsed.steps : deterministicData.steps
+        is_design_layout: true,
+        detected_type: AUDIT_PROFILES[currentAuditMode].type,
+        summary, verdict_title: verdict,
+        sub_scores: scores, final_score: finalScore,
+        critique, steps: actionSteps,
+        detections,
+        engine_label: aiEngine.status === 'ready' ? `Локальный AI • объектов: ${detections.length}` : 'Расширенный резервный анализ',
+        metrics: {
+          leftShare: features.leftShare, topShare: features.topShare,
+          highlightRatio: features.highlightRatio, shadowRatio: features.shadowRatio,
+          palette: features.palette
+        }
       };
     }
 
     async function runFullDesignAudit() {
-      const scanOv = document.getElementById('scanOverlay');
-      scanOv.classList.add('active');
+      if (!hasLoadedImage) return;
+      const runId = ++activeAuditRun;
+      const scanOverlay = document.getElementById('scanOverlay');
+      scanOverlay.classList.add('active');
       setScoreUI(0, [0, 0, 0, 0], true);
-
-      // 1. Вычисляем детерминированный попиксельный профиль и отпечаток изображения
-      const localResult = computePixelHeuristicsAndHeatmap();
-      const cacheKey = localResult.fingerprint + '_' + (document.getElementById('auditContextTitle').value.trim() || '');
-
-      const stages = [
-        ['ШАГ 1 / 4 • ПРОВЕРКА ИЗОБРАЖЕНИЯ', 'Определение типа работы и основных объектов...'],
-        ['ШАГ 2 / 4 • КАРТА ВНИМАНИЯ', 'Поиск самых заметных деталей и оценка композиции...'],
-        ['ШАГ 3 / 4 • КОНТРАСТ И ТЕКСТ', 'Проверка читаемости заголовков и отделения от фона...'],
-        ['ШАГ 4 / 4 • ПОДГОТОВКА СОВЕТОВ', 'Формирование итоговой оценки и рекомендаций...']
-      ];
-      let stIdx = 0;
-      const stTimer = setInterval(() => {
-        stIdx = Math.min(3, stIdx + 1);
-        document.getElementById('scanStepBadge').textContent = stages[stIdx][0];
-        document.getElementById('scanTitleText').textContent = stages[stIdx][1];
-      }, 750);
-
-      // Если эта картинка уже проверялась — берём результат из кэша (100% идентичная оценка и разбор)
-      if (auditMemoryCache.has(cacheKey)) {
-        await new Promise(r => setTimeout(r, 1800));
-        clearInterval(stTimer);
-        scanOv.classList.remove('active');
-        renderAuditOutput(auditMemoryCache.get(cacheKey));
-        return;
-      }
-
-      let finalResult = localResult;
       try {
-        const [aiMerged] = await Promise.all([
-          fetchGeminiTextExplanation(localResult).catch(() => localResult),
-          new Promise(r => setTimeout(r, 2800))
-        ]);
-        if (aiMerged) finalResult = aiMerged;
-      } catch (_) {
-        finalResult = localResult;
-      }
+        updateScanStage(1, 'Читаем структуру изображения…', 'Вычисляем отпечаток, квадранты, свет, цвет и контуры');
+        await nextFrame();
+        const features = computeVisualFeaturesAndHeatmap();
+        const contextKey = document.getElementById('auditContextTitle').value.trim();
+        const nicheKey = document.getElementById('auditNicheSelect').value;
+        const cacheKey = [AUDIT_ENGINE_VERSION, features.fingerprint, currentAuditMode, contextKey, nicheKey].join('_');
+        if (auditMemoryCache.has(cacheKey)) {
+          const cached = auditMemoryCache.get(cacheKey);
+          currentAuditResult = cached;
+          currentDetections = cached.detections || [];
+          renderAuditOutput(cached);
+          return;
+        }
 
-      auditMemoryCache.set(cacheKey, finalResult);
-      clearInterval(stTimer);
-      scanOv.classList.remove('active');
-      renderAuditOutput(finalResult);
+        updateScanStage(2, 'Запускаем локальный AI…', 'Подготовка распознавания лиц и главных объектов');
+        await ensureAIEngine();
+        if (runId !== activeAuditRun) return;
+        updateScanStage(3, 'Ищем объекты и зоны внимания…', 'Сопоставляем найденные объекты с фоном и композицией');
+        const detections = await detectSceneObjects(features.fingerprint);
+        if (runId !== activeAuditRun) return;
+        features.subjectContrast = clamp(features.centerPeripheryContrast * 3.2);
+        features.advisorySubjectContrast = calculateSubjectContrast(features, detections);
+        updateScanStage(4, 'Формируем персональный разбор…', 'Связываем слабые метрики с конкретными исправлениями');
+        const result = buildAIAnalysis(features, detections);
+        auditMemoryCache.set(cacheKey, result);
+        currentAuditResult = result;
+        currentDetections = detections;
+        renderAuditOutput(result);
+      } catch (_) {
+        document.getElementById('verdictTitle').textContent = 'Не удалось завершить анализ';
+        document.getElementById('verdictSub').textContent = 'Попробуйте другое изображение или повторите проверку';
+        showToast('Ошибка анализа. Проверьте изображение и повторите попытку');
+      } finally {
+        if (runId === activeAuditRun) scanOverlay.classList.remove('active');
+      }
     }
 
-    function setScoreUI(avg, subs, isReset) {
-      const scoreEl = document.getElementById('scoreNum');
+    function setScoreUI(average, subscores, isReset) {
+      document.getElementById('scoreNum').textContent = average.toFixed(1);
       const arc = document.getElementById('gaugeArc');
-      scoreEl.textContent = avg.toFixed(1);
-      const offset = 239 - (Math.min(10, Math.max(0, avg)) / 10) * 239;
+      const offset = 239 - (clamp(average, 0, 10) / 10) * 239;
       arc.style.strokeDashoffset = isReset ? 239 : offset;
-      arc.style.stroke = avg < 3.5 ? '#ff5252' : (avg >= 7.5 ? '#d4ff33' : '#ffffff');
-
-      ['subVal1', 'subVal2', 'subVal3', 'subVal4'].forEach((id, i) => {
-        document.getElementById(id).textContent = (subs[i] || 0).toFixed(1);
+      arc.style.stroke = average < 3.5 ? '#ff5252' : average >= 7.5 ? '#d4ff33' : '#ffffff';
+      ['subVal1', 'subVal2', 'subVal3', 'subVal4'].forEach((id, index) => {
+        document.getElementById(id).textContent = (subscores[index] || 0).toFixed(1);
       });
     }
 
-    function renderAuditOutput(res) {
-      const subs = res.sub_scores || [7.0, 7.0, 7.0, 7.0];
-      const exactAvg = typeof res.final_score === 'number'
-        ? res.final_score
-        : Number(((subs[0] + subs[1] + subs[2] + subs[3]) / 4).toFixed(1));
+    function drawAnalysisOverlay(detections) {
+      const source = document.getElementById('mainCanvas');
+      const canvas = document.getElementById('overlayCanvas');
+      if (canvas.width !== source.width) canvas.width = source.width;
+      if (canvas.height !== source.height) canvas.height = source.height;
+      const context = canvas.getContext('2d');
+      const width = canvas.width, height = canvas.height;
+      context.clearRect(0, 0, width, height);
+      if (!hasLoadedImage) return;
+      const lineWidth = Math.max(1.5, width / 500);
+      context.lineWidth = lineWidth;
+      context.setLineDash([]);
+      if (overlayState.thirds) {
+        context.strokeStyle = 'rgba(255,255,255,0.65)';
+        context.beginPath();
+        [1/3, 2/3].forEach(part => {
+          context.moveTo(width * part, 0); context.lineTo(width * part, height);
+          context.moveTo(0, height * part); context.lineTo(width, height * part);
+        });
+        context.stroke();
+      }
+      if (overlayState.safe) {
+        context.setLineDash([lineWidth * 4, lineWidth * 3]);
+        context.strokeStyle = 'rgba(212,255,51,0.85)';
+        context.strokeRect(width * 0.05, height * 0.05, width * 0.90, height * 0.90);
+        context.strokeStyle = 'rgba(255,255,255,0.45)';
+        context.strokeRect(width * 0.10, height * 0.10, width * 0.80, height * 0.80);
+        if (currentAuditMode === 'thumbnail') {
+          context.strokeStyle = 'rgba(255,82,82,0.85)';
+          context.strokeRect(width * 0.80, height * 0.82, width * 0.15, height * 0.12);
+        }
+        context.setLineDash([]);
+      }
+      if (!overlayState.objects) return;
+      const fontSize = Math.max(12, Math.round(width / 58));
+      context.font = `600 ${fontSize}px sans-serif`;
+      context.textBaseline = 'middle';
+      const occupiedLabels = [];
+      detections.forEach((detection, index) => {
+        const [x, y, boxWidth, boxHeight] = detection.bbox;
+        const color = detection.kind === 'face' ? '#d4ff33' : '#ffffff';
+        context.strokeStyle = color;
+        context.lineWidth = Math.max(2, width / 430);
+        context.setLineDash([lineWidth * 7, lineWidth * 3]);
+        context.strokeRect(x, y, boxWidth, boxHeight);
+        context.setLineDash([]);
+        const corner = Math.max(8, width / 45);
+        context.beginPath();
+        context.moveTo(x, y + corner); context.lineTo(x, y); context.lineTo(x + corner, y);
+        context.moveTo(x + boxWidth - corner, y + boxHeight); context.lineTo(x + boxWidth, y + boxHeight); context.lineTo(x + boxWidth, y + boxHeight - corner);
+        context.stroke();
+        const label = `${detection.label.toUpperCase()} ${Math.round(detection.confidence * 100)}%`;
+        const labelWidth = context.measureText(label).width + fontSize;
+        const labelHeight = fontSize * 1.65;
+        const labelX = clamp(x, 0, Math.max(0, width - labelWidth));
+        let labelY = Math.max(0, y - fontSize * 1.8);
+        let attempts = 0;
+        while (occupiedLabels.some(area => labelX < area.x + area.width && labelX + labelWidth > area.x
+          && labelY < area.y + area.height && labelY + labelHeight > area.y) && attempts < detections.length) {
+          labelY += labelHeight + 3;
+          attempts++;
+        }
+        occupiedLabels.push({ x: labelX, y: labelY, width: labelWidth, height: labelHeight });
+        context.fillStyle = color;
+        context.fillRect(labelX, labelY, labelWidth, labelHeight);
+        context.fillStyle = '#121317';
+        context.fillText(label, labelX + fontSize * 0.5, labelY + fontSize * 0.83);
+      });
+    }
 
-      setScoreUI(exactAvg, subs, false);
-
+    function renderAuditOutput(result) {
+      const subscores = result.sub_scores || [0, 0, 0, 0];
+      setScoreUI(result.final_score, subscores, false);
       const badge = document.getElementById('detectedTypeBadge');
-      badge.textContent = res.detected_type || (res.is_design_layout ? 'ДИЗАЙН-МАКЕТ' : 'НЕ ЯВЛЯЕТСЯ МАКЕТОМ');
-      badge.style.color = res.is_design_layout ? 'var(--lime)' : 'var(--danger)';
+      badge.textContent = result.detected_type;
+      badge.style.color = 'var(--lime)';
+      document.getElementById('recognizedPlotText').textContent = result.summary;
+      document.getElementById('verdictTitle').textContent = result.verdict_title;
+      document.getElementById('verdictSub').textContent = `${result.engine_label} • одинаковый файл получает тот же балл`;
+      document.getElementById('critiqueList').innerHTML = (result.critique || []).map(item => `<div class="tip-card">${item}</div>`).join('');
+      document.getElementById('actionPlanWrap').style.display = 'block';
+      document.getElementById('actionStepsList').innerHTML = (result.steps || []).map((step, index) =>
+        `<div><strong style="color:var(--lime);font-family:var(--font-mono);">ШАГ ${index + 1}:</strong> ${step}</div>`
+      ).join('');
 
-      document.getElementById('recognizedPlotText').textContent = res.summary;
-      document.getElementById('verdictTitle').textContent = res.verdict_title;
-      document.getElementById('verdictSub').textContent = res.is_design_layout
-        ? 'Оценка закреплена за изображением и рассчитана по 4 критериям'
-        : 'Обычное фото или конспект не является оформленным макетом';
-
-      document.getElementById('critiqueList').innerHTML = (res.critique || []).map(c => `
-        <div class="tip-card">${c}</div>
-      `).join('');
-
-      const planWrap = document.getElementById('actionPlanWrap');
-      planWrap.style.display = 'block';
-      document.getElementById('actionStepsList').innerHTML = (res.steps || []).map((s, idx) => `
-        <div><strong style="color:var(--lime);font-family:var(--font-mono);">ШАГ ${idx + 1}:</strong> ${s}</div>
-      `).join('');
+      const detections = result.detections || [];
+      document.getElementById('detectionList').innerHTML = detections.length
+        ? detections.slice(0, 7).map(item => `<span class="detection-chip ${item.kind === 'face' ? 'face' : ''}">${item.label} · ${Math.round(item.confidence * 100)}%</span>`).join('')
+        : '<span class="detection-chip">Уверенно распознанных объектов нет</span>';
+      const palette = result.metrics.palette || [];
+      document.getElementById('paletteStrip').innerHTML = palette.map(color =>
+        `<span style="background:${color.hex};flex-grow:${color.count}" title="${color.hex}"></span>`
+      ).join('');
+      document.getElementById('diagnosticGrid').hidden = false;
+      document.getElementById('metricHorizontal').textContent = `${pct(result.metrics.leftShare)} / ${pct(1 - result.metrics.leftShare)}`;
+      document.getElementById('metricVertical').textContent = `${pct(result.metrics.topShare)} / ${pct(1 - result.metrics.topShare)}`;
+      document.getElementById('metricHighlights').textContent = pct(result.metrics.highlightRatio);
+      document.getElementById('metricShadows').textContent = pct(result.metrics.shadowRatio);
+      drawAnalysisOverlay(detections);
     }
 
     /* ==========================================================================
@@ -2094,31 +2560,59 @@
       ad: { tag: 'РЕКЛАМА НА САЙТЕ', title: 'Размещение рекламы в CTRL.PNG', html: '<p>Вы можете разместить баннер своего проекта, курса или набора материалов. Напишите нам в окно поддержки в правом нижнем углу.</p>' }
     };
 
+    let modalReturnFocus = null;
     function openModal(id) {
       const m = MODAL_CONTENT[id];
       if (!m) return;
+      modalReturnFocus = document.activeElement;
       document.getElementById('modalTag').textContent = m.tag;
       document.getElementById('modalTitle').textContent = m.title;
       document.getElementById('modalBody').innerHTML = m.html;
       document.getElementById('studioModal').classList.add('open');
+      document.getElementById('modalCloseBtn').focus();
     }
-    function closeModal() { document.getElementById('studioModal').classList.remove('open'); }
+    function closeModal() {
+      document.getElementById('studioModal').classList.remove('open');
+      if (modalReturnFocus && document.contains(modalReturnFocus)) modalReturnFocus.focus();
+    }
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Escape') return;
+      closeModal();
+      document.getElementById('supportBox').classList.remove('open');
+    });
 
     function toggleSupport() {
       document.getElementById('supportBox').classList.toggle('open');
     }
 
     function sendSupportMsg() {
-      const inp = document.getElementById('chatInput');
-      const val = inp.value.trim();
-      if (!val) return;
+      const input = document.getElementById('chatInput');
+      const value = input.value.trim();
+      if (!value) return;
       const log = document.getElementById('chatLog');
-      log.innerHTML += `<div class="bubble user">${val.replace(/</g, '&lt;')}</div>`;
-      inp.value = '';
+      const userBubble = document.createElement('div');
+      userBubble.className = 'bubble user';
+      userBubble.textContent = value;
+      log.appendChild(userBubble);
+      input.value = '';
+      let answer = 'Откройте «Анализатор» для разбора изображения, а точный контраст двух цветов можно проверить в разделе «Материалы».';
+      if (/контраст|читаем|wcag/i.test(value)) {
+        answer = 'Для обычного текста нужен контраст не ниже 4.5:1, для крупного заголовка — не ниже 3:1. В «Материалах» можно сразу проверить свою пару цветов.';
+      } else if (/тз|задани/i.test(value)) {
+        answer = 'В разделе «Обучение» заполните название, формат и задачу проекта — генератор сразу соберёт готовое техническое задание.';
+      } else if (/анализ|балл|оценк|результат/i.test(value) && currentAuditResult) {
+        answer = `Последний разбор: ${currentAuditResult.final_score}/10 — ${currentAuditResult.verdict_title}. Начните с первого шага в блоке советов: он выбран по самой слабой метрике этого изображения.`;
+      } else if (/анализ|балл|оценк|результат/i.test(value)) {
+        answer = 'Загрузите макет в «Анализаторе». Локальный AI найдёт лица и объекты, а затем оценит композицию, свет, читаемость и цвет без отправки файла на сервер.';
+      }
       setTimeout(() => {
-        log.innerHTML += `<div class="bubble bot">Спасибо за сообщение! Чтобы проверить свою работу, откройте вкладку «Анализатор», а для проверки читаемости текста перейдите в раздел «Материалы».</div>`;
+        const botBubble = document.createElement('div');
+        botBubble.className = 'bubble bot';
+        botBubble.textContent = answer;
+        log.appendChild(botBubble);
         log.scrollTop = log.scrollHeight;
-      }, 350);
+      }, 250);
+      log.scrollTop = log.scrollHeight;
     }
 
     function copyText(str) {
